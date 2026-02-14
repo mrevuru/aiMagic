@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DARA Servicing KPI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080b0e;
+  --surface: #0f1419;
+  --surface2: #141c24;
+  --border: #1a2530;
+  --border2: #243040;
+  --dara-blue: #2baae2;
+  --dara-blue-dim: rgba(43,170,226,0.12);
+  --dara-blue-glow: rgba(43,170,226,0.35);
+  --gold: #c8a96e;
+  --green: #3fbf8a;
+  --red: #e05c5c;
+  --yellow: #f0c040;
+  --purple: #9b72cf;
+  --text: #e4ddd4;
+  --muted: #5a6a7a;
+  --muted2: #8a9aaa;
+  --nav-w: 220px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── GRID BG ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(43,170,226,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43,170,226,0.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ══════════════ LEFT NAV ══════════════ */
+.sidebar {
+  width: var(--nav-w);
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.9rem;
+  letter-spacing: 0.1em;
+  line-height: 1;
+}
+
+.logo-title .blue { color: var(--dara-blue); text-shadow: 0 0 16px var(--dara-blue-glow); }
+.logo-title .white { color: var(--text); }
+
+.logo-sub {
+  font-size: 0.56rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.nav-section-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 18px 20px 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--dara-blue-dim);
+  border-left-color: rgba(43,170,226,0.4);
+}
+
+.nav-item.active {
+  background: var(--dara-blue-dim);
+  border-left-color: var(--dara-blue);
+}
+
+.nav-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.nav-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted2);
+  transition: color 0.2s;
+}
+
+.nav-item.active .nav-label,
+.nav-item:hover .nav-label {
+  color: var(--text);
+}
+
+.nav-item.active .nav-label { color: var(--dara-blue); }
+
+.nav-badge {
+  margin-left: auto;
+  font-size: 0.52rem;
+  background: var(--red);
+  color: white;
+  padding: 1px 5px;
+  border-radius: 8px;
+  letter-spacing: 0.04em;
+}
+
+.nav-badge.warn { background: var(--yellow); color: var(--bg); }
+.nav-badge.ok { background: var(--green); }
+
+.nav-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 20px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.6rem;
+  color: var(--green);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,100% { opacity:1; } 50% { opacity:0.3; }
+}
+
+.sidebar-date {
+  font-size: 0.56rem;
+  color: var(--muted);
+  margin-top: 5px;
+  letter-spacing: 0.06em;
+}
+
+/* ══════════════ MAIN CONTENT ══════════════ */
+.main {
+  margin-left: var(--nav-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,11,14,0.9);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.breadcrumb .root { color: var(--muted); }
+.breadcrumb .sep { color: var(--border2); }
+.breadcrumb .current { color: var(--dara-blue); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--surface2);
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+
+.period-tab {
+  padding: 4px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-tab.active {
+  background: var(--dara-blue);
+  color: var(--bg);
+}
+
+.export-btn {
+  padding: 6px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover { border-color: var(--dara-blue); color: var(--dara-blue); }
+
+/* CONTENT PANELS */
+.content-panel { display: none; padding: 28px 32px 40px; animation: fadeIn 0.35s ease; }
+.content-panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.page-header h2 span { color: var(--dara-blue); }
+
+.page-header p {
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+/* ── CARDS ── */
+.kpi-grid {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.g4 { grid-template-columns: repeat(4, 1fr); }
+.g3 { grid-template-columns: repeat(3, 1fr); }
+.g2 { grid-template-columns: repeat(2, 1fr); }
+.g2-1 { grid-template-columns: 2fr 1fr; }
+.g1-2 { grid-template-columns: 1fr 2fr; }
+.g3-2 { grid-template-columns: 3fr 2fr; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.2s;
+  cursor: pointer;
+  animation: slideUp 0.5s ease both;
+}
+
+.card:hover { border-color: var(--dara-blue); }
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 2px;
+  background: var(--dara-blue);
+  transition: width 0.35s ease;
+}
+.card:hover::after { width: 100%; }
+
+@keyframes slideUp {
+  from { opacity:0; transform:translateY(16px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.2s; }
+
+.card.alert-card { border-color: rgba(224,92,92,0.4); }
+.card.alert-card::after { background: var(--red); }
+.card.warn-card { border-color: rgba(240,192,64,0.35); }
+.card.warn-card::after { background: var(--yellow); }
+.card.good-card { border-color: rgba(63,191,138,0.3); }
+.card.good-card::after { background: var(--green); }
+
+.clabel {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a8c4d4;
+  text-shadow: 0 0 10px rgba(168,196,212,0.5);
+  margin-bottom: 10px;
+}
+
+.cval {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.4rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.cval .unit { font-size: 1rem; color: var(--muted); }
+.cval .sm { font-size: 1.4rem; }
+
+.cdelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  padding: 2px 7px;
+  border-radius: 2px;
+  margin-top: 6px;
+}
+
+.up { color: var(--green); background: rgba(63,191,138,0.1); }
+.down-bad { color: var(--red); background: rgba(224,92,92,0.1); }
+.down-good { color: var(--green); background: rgba(63,191,138,0.1); }
+.up-bad { color: var(--red); background: rgba(224,92,92,0.1); }
+.neutral { color: var(--muted2); background: rgba(90,106,122,0.15); }
+
+.csub {
+  font-size: 0.58rem;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 0.05em;
+}
+
+/* DRILL-DOWN OVERLAY */
+.drilldown-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.drilldown-overlay.open { display: flex; align-items: flex-start; justify-content: flex-end; }
+
+.drilldown-panel {
+  width: 560px;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border2);
+  padding: 32px 28px;
+  overflow-y: auto;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.dd-close {
+  position: absolute;
+  top: 24px; right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.dd-close:hover { border-color: var(--red); color: var(--red); }
+
+.dd-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  color: var(--dara-blue);
+  margin-bottom: 4px;
+}
+
+.dd-subtitle {
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.dd-row:last-child { border-bottom: none; }
+
+.dd-row-label { font-size: 0.66rem; color: var(--muted2); letter-spacing: 0.06em; }
+.dd-row-val { font-size: 0.72rem; color: var(--text); }
+.dd-row-bar { flex: 1; height: 4px; background: var(--border2); margin: 0 14px; border-radius: 2px; overflow: hidden; }
+.dd-row-fill { height: 100%; border-radius: 2px; background: var(--dara-blue); }
+
+.dd-section { margin-top: 22px; margin-bottom: 10px; font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+
+/* MINI CHART */
+.mini-spark { width: 100%; height: 44px; }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.data-table th {
+  font-size: 0.56rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); padding: 6px 10px; text-align: left;
+  border-bottom: 1px solid var(--border2);
+}
+.data-table td {
+  font-size: 0.65rem; padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.data-table tr:hover td { background: rgba(43,170,226,0.04); }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* STATUS PILL */
+.pill {
+  font-size: 0.54rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 2px;
+}
+.pill.red { background: rgba(224,92,92,0.15); color: var(--red); }
+.pill.yellow { background: rgba(240,192,64,0.15); color: var(--yellow); }
+.pill.green { background: rgba(63,191,138,0.15); color: var(--green); }
+.pill.blue { background: var(--dara-blue-dim); color: var(--dara-blue); }
+
+/* PROGRESS STACKS */
+.stack-bar { height: 8px; display: flex; border-radius: 2px; overflow: hidden; margin-top: 10px; }
+.stack-seg { height: 100%; transition: flex 0.8s ease; }
+
+/* ALERT BANNER */
+.alert-banner {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  background: rgba(224,92,92,0.08);
+  border: 1px solid rgba(224,92,92,0.3);
+  margin-bottom: 20px;
+  animation: slideUp 0.4s ease;
+}
+
+.alert-banner .icon { color: var(--red); font-size: 1rem; }
+.alert-banner p { font-size: 0.65rem; color: var(--text); letter-spacing: 0.04em; }
+.alert-banner p span { color: var(--red); font-weight: 500; }
+
+/* SPARKLINE inline */
+.spark-inline { display:flex; align-items:flex-end; gap:2px; height:28px; margin-top:10px; }
+.spark-bar { flex:1; background: var(--dara-blue-dim); border-top: 1px solid var(--dara-blue); min-height: 2px; transition: background 0.2s; }
+.spark-bar:hover { background: var(--dara-blue-dim); }
+.spark-bar.red-bar { border-top-color: var(--red); background: rgba(224,92,92,0.08); }
+.spark-bar.green-bar { border-top-color: var(--green); background: rgba(63,191,138,0.08); }
+
+/* SECTION DIVIDER */
+.sec-divider {
+  font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted); display: flex; align-items: center; gap: 12px;
+  margin: 24px 0 14px;
+}
+.sec-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ══════════════ DARA AGENT STYLES ══════════════ */
+
+/* Agent Config Bar */
+.agent-config-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  padding: 14px 20px;
+  margin-bottom: 24px;
+}
+
+.config-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.config-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+.config-dot.connected {
+  background: var(--green);
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.config-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted2);
+}
+
+.config-btn {
+  padding: 8px 16px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-btn:hover {
+  border-color: var(--dara-blue);
+  color: var(--dara-blue);
+  background: var(--dara-blue-dim);
+}
+
+/* Canned Questions Grid */
+.canned-questions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.canned-q-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.canned-q-card:hover {
+  border-color: var(--dara-blue);
+  background: var(--dara-blue-dim);
+  transform: translateY(-2px);
+}
+
+.canned-q-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--dara-blue);
+  transition: width 0.3s ease;
+}
+
+.canned-q-card:hover::after {
+  width: 100%;
+}
+
+.cq-icon {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.cq-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.cq-desc {
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+/* Chat Interface */
+.agent-chat-container {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.chat-messages {
+  min-height: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--dara-blue);
+}
+
+.chat-welcome {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.welcome-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.chat-welcome h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  color: var(--dara-blue);
+  margin-bottom: 10px;
+}
+
+.chat-welcome p {
+  font-size: 0.68rem;
+  color: var(--muted2);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto 8px;
+}
+
+.welcome-sub {
+  font-size: 0.62rem !important;
+  color: var(--muted) !important;
+  margin-top: 12px !important;
+}
+
+/* Chat Bubbles */
+.chat-message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message.user {
+  flex-direction: row-reverse;
+}
+
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.chat-avatar.user-avatar {
+  background: var(--dara-blue-dim);
+  border: 1px solid var(--dara-blue);
+  color: var(--dara-blue);
+}
+
+.chat-avatar.agent-avatar {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--green);
+}
+
+.chat-bubble {
+  max-width: 70%;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+.chat-message.user .chat-bubble {
+  background: var(--dara-blue-dim);
+  border: 1px solid var(--dara-blue);
+  color: var(--text);
+}
+
+.chat-message.agent .chat-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+}
+
+.chat-bubble.loading {
+  padding: 16px;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--dara-blue);
+  border-radius: 50%;
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+}
+
+.chat-timestamp {
+  font-size: 0.56rem;
+  color: var(--muted);
+  margin-top: 4px;
+  text-align: right;
+}
+
+.chat-message.agent .chat-timestamp {
+  text-align: left;
+}
+
+/* Chat Input */
+.chat-input-area {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+#chat-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  padding: 12px 14px;
+  resize: none;
+  transition: border-color 0.2s;
+  line-height: 1.5;
+}
+
+#chat-input:focus {
+  outline: none;
+  border-color: var(--dara-blue);
+  background: var(--bg);
+}
+
+#chat-input::placeholder {
+  color: var(--muted);
+}
+
+.send-btn {
+  padding: 0 20px;
+  background: var(--dara-blue);
+  border: none;
+  color: var(--bg);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-btn:hover {
+  background: var(--dara-blue);
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
+.send-btn:active {
+  transform: translateY(0);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-icon {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+/* Agent Stats */
+.agent-stats {
+  display: flex;
+  gap: 2px;
+  margin-top: 20px;
+}
+
+.stat-item {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.04em;
+  color: var(--dara-blue);
+}
+
+/* Config Modal */
+.config-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.config-modal.open {
+  display: flex;
+}
+
+.config-modal-content {
+  width: 600px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 32px;
+  position: relative;
+  animation: modalSlide 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.config-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.config-modal-content::-webkit-scrollbar-track {
+  background: var(--surface2);
+}
+
+.config-modal-content::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 4px;
+}
+
+@keyframes modalSlide {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.config-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.config-modal-close:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.config-modal h3 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.8rem;
+  letter-spacing: 0.08em;
+  color: var(--dara-blue);
+  margin-bottom: 8px;
+}
+
+.config-modal > p {
+  font-size: 0.64rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+  letter-spacing: 0.04em;
+}
+
+/* Config Tabs */
+.config-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.config-tab {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  bottom: -1px;
+}
+
+.config-tab:hover {
+  color: var(--muted2);
+  background: var(--surface2);
+}
+
+.config-tab.active {
+  color: var(--dara-blue);
+  border-bottom-color: var(--dara-blue);
+  background: transparent;
+}
+
+.config-tab-content {
+  display: none;
+}
+
+.config-tab-content.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Section Header */
+.config-section-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.config-section-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.config-section-header h4 {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.config-section-desc {
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+.config-form-group {
+  margin-bottom: 20px;
+}
+
+.config-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.config-form-label {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 8px;
+}
+
+.config-form-input,
+.config-form-input:focus {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  padding: 10px 12px;
+  transition: border-color 0.2s;
+}
+
+.config-form-input:focus {
+  outline: none;
+  border-color: var(--dara-blue);
+  background: var(--bg);
+}
+
+.config-form-input::placeholder {
+  color: var(--muted);
+}
+
+select.config-form-input {
+  cursor: pointer;
+}
+
+.config-helper-text {
+  font-size: 0.58rem;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.config-form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.config-btn-primary {
+  padding: 10px 24px;
+  background: var(--dara-blue);
+  border: none;
+  color: var(--bg);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.config-btn-primary:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+
+.config-btn-secondary {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-btn-secondary:hover {
+  border-color: var(--muted2);
+  color: var(--text);
+}
+
+.config-test-result {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 0.62rem;
+  display: none;
+  letter-spacing: 0.04em;
+}
+
+.config-test-result.success {
+  background: rgba(63, 191, 138, 0.1);
+  border: 1px solid var(--green);
+  color: var(--green);
+  display: block;
+}
+
+.config-test-result.error {
+  background: rgba(224, 92, 92, 0.1);
+  border: 1px solid var(--red);
+  color: var(--red);
+  display: block;
+}
+
+.config-test-result.loading {
+  background: rgba(43, 170, 226, 0.1);
+  border: 1px solid var(--dara-blue);
+  color: var(--dara-blue);
+  display: block;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-title">
+      <span class="blue">DARA</span><span class="white"> KPI</span>
+    </div>
+    <div class="logo-sub">Servicing Intelligence</div>
+  </div>
+
+  <div class="nav-section-label">Core Servicing</div>
+
+  <div class="nav-item active" data-panel="portfolio">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Portfolio Overview</span>
+  </div>
+  <div class="nav-item" data-panel="delinquency">
+    <span class="nav-icon">⚠️</span>
+    <span class="nav-label">Delinquency</span>
+    <span class="nav-badge">14</span>
+  </div>
+  <div class="nav-item" data-panel="loss-mit">
+    <span class="nav-icon">🛡️</span>
+    <span class="nav-label">Loss Mitigation</span>
+    <span class="nav-badge warn">3</span>
+  </div>
+  <div class="nav-item" data-panel="escrow">
+    <span class="nav-icon">🏦</span>
+    <span class="nav-label">Escrow & Taxes</span>
+    <span class="nav-badge ok">✓</span>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-section-label">Operations</div>
+
+  <div class="nav-item" data-panel="payments">
+    <span class="nav-icon">💳</span>
+    <span class="nav-label">Payment Processing</span>
+  </div>
+  <div class="nav-item" data-panel="foreclosure">
+    <span class="nav-icon">⚖️</span>
+    <span class="nav-label">Foreclosure</span>
+    <span class="nav-badge">7</span>
+  </div>
+  <div class="nav-item" data-panel="customer">
+    <span class="nav-icon">🎧</span>
+    <span class="nav-label">Customer Service</span>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-section-label">Compliance</div>
+
+  <div class="nav-item" data-panel="compliance">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Regulatory & CFPB</span>
+    <span class="nav-badge warn">2</span>
+  </div>
+  <div class="nav-item" data-panel="investor">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Investor Reporting</span>
+  </div>
+
+  <div class="nav-divider"></div>
+  <div class="nav-section-label">AI Assistant</div>
+
+  <div class="nav-item" data-panel="agent">
+    <span class="nav-icon">🤖</span>
+    <span class="nav-label">DARA Agent</span>
+    <span class="nav-badge ok">AI</span>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="live-indicator"><div class="live-dot"></div>Live · Refreshing</div>
+    <div class="sidebar-date">Feb 12, 2026 · 09:41 EST</div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="breadcrumb">
+      <span class="root">DARA</span>
+      <span class="sep">›</span>
+      <span class="current" id="breadcrumb-current">Portfolio Overview</span>
+    </div>
+    <div class="topbar-right">
+      <div class="period-tabs">
+        <button class="period-tab">WTD</button>
+        <button class="period-tab">MTD</button>
+        <button class="period-tab active">QTD</button>
+        <button class="period-tab">YTD</button>
+      </div>
+      <button class="export-btn">⬇ Export</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 1: PORTFOLIO OVERVIEW
+  ══════════════════════════════════ -->
+  <div class="content-panel active" id="panel-portfolio">
+    <div class="page-header">
+      <div>
+        <h2>Portfolio <span>Overview</span></h2>
+        <p>All active serviced loans · As of Feb 12, 2026</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid g4">
+      <div class="card" data-drill="portfolio-upa">
+        <div class="clabel">Unpaid Principal Balance</div>
+        <div class="cval"><span class="unit">$</span>18.4<span class="sm">B</span></div>
+        <div class="cdelta up">▲ 2.1% QoQ</div>
+        <div class="csub">84,312 active loans</div>
+      </div>
+      <div class="card" data-drill="portfolio-count">
+        <div class="clabel">Active Loan Count</div>
+        <div class="cval">84,312</div>
+        <div class="cdelta up">▲ 1,204 new this quarter</div>
+        <div class="csub">Avg balance: $218,200</div>
+      </div>
+      <div class="card good-card" data-drill="portfolio-current">
+        <div class="clabel">Current Loans</div>
+        <div class="cval">96.2<span class="unit">%</span></div>
+        <div class="cdelta up">▲ 0.4 pts</div>
+        <div class="csub">81,108 loans fully current</div>
+      </div>
+      <div class="card" data-drill="portfolio-prepay">
+        <div class="clabel">Prepayment Speed (CPR)</div>
+        <div class="cval">8.4<span class="unit">%</span></div>
+        <div class="cdelta neutral">— 0.2 pts stable</div>
+        <div class="csub">12-mo avg: 9.1%</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid g3" style="margin-top:2px">
+      <div class="card" data-drill="portfolio-types">
+        <div class="clabel">Portfolio Mix by Product</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">30yr Fixed</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:72%"></div></div><span style="font-size:0.68rem; color:var(--text)">62%</span></div>
+          <div class="dd-row"><span class="dd-row-label">15yr Fixed</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:22%; background:var(--green)"></div></div><span style="font-size:0.68rem; color:var(--text)">19%</span></div>
+          <div class="dd-row"><span class="dd-row-label">ARM</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:14%; background:var(--yellow)"></div></div><span style="font-size:0.68rem; color:var(--text)">12%</span></div>
+          <div class="dd-row"><span class="dd-row-label">Jumbo</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:8%; background:var(--purple)"></div></div><span style="font-size:0.68rem; color:var(--text)">7%</span></div>
+        </div>
+      </div>
+      <div class="card" data-drill="portfolio-geo">
+        <div class="clabel">Top States by UPB</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">California</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:80%"></div></div><span style="font-size:0.68rem; color:var(--text)">$3.8B</span></div>
+          <div class="dd-row"><span class="dd-row-label">Texas</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:60%"></div></div><span style="font-size:0.68rem; color:var(--text)">$2.9B</span></div>
+          <div class="dd-row"><span class="dd-row-label">Florida</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:48%"></div></div><span style="font-size:0.68rem; color:var(--text)">$2.3B</span></div>
+          <div class="dd-row"><span class="dd-row-label">New York</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:38%"></div></div><span style="font-size:0.68rem; color:var(--text)">$1.8B</span></div>
+          <div class="dd-row"><span class="dd-row-label">Others</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:50%; background:var(--muted)"></div></div><span style="font-size:0.68rem; color:var(--text)">$7.6B</span></div>
+        </div>
+      </div>
+      <div class="card" data-drill="portfolio-vintage">
+        <div class="clabel">UPB by Vintage (Monthly)</div>
+        <div class="spark-inline" style="height:70px; margin-top:14px; align-items:flex-end;">
+          <div class="spark-bar" style="height:40%"></div>
+          <div class="spark-bar" style="height:52%"></div>
+          <div class="spark-bar" style="height:48%"></div>
+          <div class="spark-bar" style="height:61%"></div>
+          <div class="spark-bar" style="height:55%"></div>
+          <div class="spark-bar" style="height:70%"></div>
+          <div class="spark-bar" style="height:66%"></div>
+          <div class="spark-bar" style="height:78%"></div>
+          <div class="spark-bar" style="height:72%"></div>
+          <div class="spark-bar" style="height:88%"></div>
+          <div class="spark-bar" style="height:92%"></div>
+          <div class="spark-bar" style="height:100%"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:5px;">
+          <span style="font-size:0.54rem; color:var(--muted);">Mar '25</span>
+          <span style="font-size:0.54rem; color:var(--muted);">Feb '26</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 2: DELINQUENCY
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-delinquency">
+    <div class="page-header">
+      <div>
+        <h2>Delinquency <span>Management</span></h2>
+        <p>30/60/90+ DPD Buckets · Collection Performance</p>
+      </div>
+    </div>
+
+    <div class="alert-banner">
+      <span class="icon">🔴</span>
+      <p><span>14 loans</span> newly entered 90+ DPD this week — exceeding the 10-loan threshold. Immediate review required.</p>
+    </div>
+
+    <div class="kpi-grid g4">
+      <div class="card alert-card" data-drill="delinq-30">
+        <div class="clabel">30-Day Delinquency</div>
+        <div class="cval">2.84<span class="unit">%</span></div>
+        <div class="cdelta up-bad">▲ 0.3 pts WoW</div>
+        <div class="csub">2,394 loans · $522M UPB</div>
+        <div class="spark-inline">
+          <div class="spark-bar red-bar" style="height:55%"></div>
+          <div class="spark-bar red-bar" style="height:60%"></div>
+          <div class="spark-bar red-bar" style="height:52%"></div>
+          <div class="spark-bar red-bar" style="height:70%"></div>
+          <div class="spark-bar red-bar" style="height:65%"></div>
+          <div class="spark-bar red-bar" style="height:80%"></div>
+          <div class="spark-bar red-bar" style="height:100%"></div>
+        </div>
+      </div>
+      <div class="card warn-card" data-drill="delinq-60">
+        <div class="clabel">60-Day Delinquency</div>
+        <div class="cval">1.12<span class="unit">%</span></div>
+        <div class="cdelta up-bad">▲ 0.1 pts WoW</div>
+        <div class="csub">944 loans · $206M UPB</div>
+        <div class="spark-inline">
+          <div class="spark-bar" style="height:60%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:65%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:70%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:68%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:75%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:88%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+          <div class="spark-bar" style="height:100%; border-top-color: var(--yellow); background: rgba(240,192,64,0.08)"></div>
+        </div>
+      </div>
+      <div class="card alert-card" data-drill="delinq-90">
+        <div class="clabel">90-Day Delinquency</div>
+        <div class="cval">0.74<span class="unit">%</span></div>
+        <div class="cdelta up-bad">▲ 0.22 pts — ALERT</div>
+        <div class="csub">624 loans · $136M UPB</div>
+        <div class="spark-inline">
+          <div class="spark-bar red-bar" style="height:40%"></div>
+          <div class="spark-bar red-bar" style="height:45%"></div>
+          <div class="spark-bar red-bar" style="height:55%"></div>
+          <div class="spark-bar red-bar" style="height:60%"></div>
+          <div class="spark-bar red-bar" style="height:70%"></div>
+          <div class="spark-bar red-bar" style="height:85%"></div>
+          <div class="spark-bar red-bar" style="height:100%"></div>
+        </div>
+      </div>
+      <div class="card good-card" data-drill="delinq-cure">
+        <div class="clabel">Cure Rate (30→Current)</div>
+        <div class="cval">68.4<span class="unit">%</span></div>
+        <div class="cdelta down-good">▲ 2.1 pts</div>
+        <div class="csub">Industry avg: 62.1%</div>
+        <div class="spark-inline">
+          <div class="spark-bar green-bar" style="height:70%"></div>
+          <div class="spark-bar green-bar" style="height:65%"></div>
+          <div class="spark-bar green-bar" style="height:72%"></div>
+          <div class="spark-bar green-bar" style="height:68%"></div>
+          <div class="spark-bar green-bar" style="height:75%"></div>
+          <div class="spark-bar green-bar" style="height:80%"></div>
+          <div class="spark-bar green-bar" style="height:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-divider">Loan-Level Delinquency Breakdown</div>
+
+    <div class="card" style="padding: 20px 24px; cursor:default;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Loan #</th>
+            <th>Borrower</th>
+            <th>DPD Bucket</th>
+            <th>UPB</th>
+            <th>Last Contact</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SVC-001842</td><td>Hartley, M.</td><td>90+</td><td>$412,000</td><td>Feb 8</td><td><span class="pill red">Critical</span></td><td style="color:var(--dara-blue); cursor:pointer;" onclick="openDrill('delinq-90')">Drill →</td>
+          </tr>
+          <tr>
+            <td>SVC-003210</td><td>Okafor Trust</td><td>60</td><td>$1,250,000</td><td>Feb 10</td><td><span class="pill yellow">Watch</span></td><td style="color:var(--dara-blue); cursor:pointer;" onclick="openDrill('delinq-60')">Drill →</td>
+          </tr>
+          <tr>
+            <td>SVC-007841</td><td>Monroe, D.</td><td>30</td><td>$298,500</td><td>Feb 11</td><td><span class="pill yellow">Watch</span></td><td style="color:var(--dara-blue); cursor:pointer;" onclick="openDrill('delinq-30')">Drill →</td>
+          </tr>
+          <tr>
+            <td>SVC-009122</td><td>Garcia, L.</td><td>90+</td><td>$544,200</td><td>Jan 28</td><td><span class="pill red">Critical</span></td><td style="color:var(--dara-blue); cursor:pointer;" onclick="openDrill('delinq-90')">Drill →</td>
+          </tr>
+          <tr>
+            <td>SVC-012400</td><td>Williams, T.</td><td>30</td><td>$185,000</td><td>Feb 12</td><td><span class="pill blue">Contacted</span></td><td style="color:var(--dara-blue); cursor:pointer;" onclick="openDrill('delinq-30')">Drill →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 3: LOSS MITIGATION
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-loss-mit">
+    <div class="page-header">
+      <div>
+        <h2>Loss <span>Mitigation</span></h2>
+        <p>Workout Plans · Forbearance · Modifications</p>
+      </div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card" data-drill="lm-active">
+        <div class="clabel">Active Workouts</div>
+        <div class="cval">1,248</div>
+        <div class="cdelta up-bad">▲ 88 this month</div>
+        <div class="csub">$274M UPB under workout</div>
+      </div>
+      <div class="card good-card" data-drill="lm-success">
+        <div class="clabel">Workout Success Rate</div>
+        <div class="cval">71.2<span class="unit">%</span></div>
+        <div class="cdelta up">▲ 3.4 pts</div>
+        <div class="csub">Mods: 58% · Repay: 82%</div>
+      </div>
+      <div class="card warn-card" data-drill="lm-forbear">
+        <div class="clabel">Forbearance Active</div>
+        <div class="cval">342</div>
+        <div class="cdelta up-bad">▲ 22 new</div>
+        <div class="csub">Avg plan length: 4.2 months</div>
+      </div>
+      <div class="card" data-drill="lm-mod">
+        <div class="clabel">Loan Modifications</div>
+        <div class="cval">214</div>
+        <div class="cdelta neutral">— 4 completed this week</div>
+        <div class="csub">Rate mods: 142 · Term: 72</div>
+      </div>
+    </div>
+    <div class="sec-divider">Workout Pipeline by Stage</div>
+    <div class="kpi-grid g3" style="margin-top:2px;">
+      <div class="card" data-drill="lm-stage">
+        <div class="clabel">Stage Distribution</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">Repayment Plan</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:75%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--text)">514</span></div>
+          <div class="dd-row"><span class="dd-row-label">Forbearance</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:50%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--text)">342</span></div>
+          <div class="dd-row"><span class="dd-row-label">Modification</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:31%"></div></div><span style="font-size:0.66rem;color:var(--text)">214</span></div>
+          <div class="dd-row"><span class="dd-row-label">DIL / Short Sale</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:14%; background:var(--red)"></div></div><span style="font-size:0.66rem;color:var(--text)">96</span></div>
+          <div class="dd-row"><span class="dd-row-label">Partial Claim</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:12%; background:var(--purple)"></div></div><span style="font-size:0.66rem;color:var(--text)">82</span></div>
+        </div>
+      </div>
+      <div class="card" data-drill="lm-timeline">
+        <div class="clabel">Avg Days in Workout</div>
+        <div class="cval" style="font-size:2rem; margin-bottom:12px;">47.2 <span class="unit">days</span></div>
+        <div class="dd-row"><span class="dd-row-label">Repayment Plan</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:35%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--text)">28d</span></div>
+        <div class="dd-row"><span class="dd-row-label">Forbearance</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:55%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--text)">44d</span></div>
+        <div class="dd-row"><span class="dd-row-label">Modification</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:80%"></div></div><span style="font-size:0.66rem;color:var(--text)">64d</span></div>
+      </div>
+      <div class="card" data-drill="lm-redefault">
+        <div class="clabel">Re-Default Rate (12mo)</div>
+        <div class="cval">18.4<span class="unit">%</span></div>
+        <div class="cdelta down-good">▼ 2.1 pts improved</div>
+        <div class="csub">Post-workout · All types</div>
+        <div class="spark-inline" style="margin-top:18px; height:50px;">
+          <div class="spark-bar red-bar" style="height:80%"></div>
+          <div class="spark-bar red-bar" style="height:75%"></div>
+          <div class="spark-bar red-bar" style="height:70%"></div>
+          <div class="spark-bar red-bar" style="height:65%"></div>
+          <div class="spark-bar red-bar" style="height:62%"></div>
+          <div class="spark-bar red-bar" style="height:55%"></div>
+          <div class="spark-bar red-bar" style="height:50%"></div>
+          <div class="spark-bar red-bar" style="height:45%"></div>
+          <div class="spark-bar red-bar" style="height:42%"></div>
+          <div class="spark-bar red-bar" style="height:40%"></div>
+          <div class="spark-bar red-bar" style="height:38%"></div>
+          <div class="spark-bar red-bar" style="height:35%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 4: ESCROW
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-escrow">
+    <div class="page-header">
+      <div><h2>Escrow <span>&amp; Taxes</span></h2><p>Insurance · Property Tax · Escrow Analysis</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card good-card" data-drill="esc-balance">
+        <div class="clabel">Total Escrow Balance</div>
+        <div class="cval"><span class="unit">$</span>1.84<span class="sm">B</span></div>
+        <div class="cdelta up">▲ 3.2% QoQ</div>
+        <div class="csub">$21,820 avg per loan</div>
+      </div>
+      <div class="card warn-card" data-drill="esc-shortage">
+        <div class="clabel">Escrow Shortages</div>
+        <div class="cval">3,842</div>
+        <div class="cdelta up-bad">▲ 214 new</div>
+        <div class="csub">$18.4M total shortage</div>
+      </div>
+      <div class="card good-card" data-drill="esc-tax">
+        <div class="clabel">Tax Payments On-Time</div>
+        <div class="cval">99.2<span class="unit">%</span></div>
+        <div class="cdelta up">▲ Best in class</div>
+        <div class="csub">68 overdue of 84,312</div>
+      </div>
+      <div class="card" data-drill="esc-insurance">
+        <div class="clabel">Insurance Lapses</div>
+        <div class="cval">142</div>
+        <div class="cdelta up-bad">▲ 12 new lapse</div>
+        <div class="csub">Force-placed: 88 active</div>
+      </div>
+    </div>
+    <div class="sec-divider">Escrow Analysis Cycle</div>
+    <div class="kpi-grid g3" style="margin-top:2px;">
+      <div class="card" data-drill="esc-analysis"><div class="clabel">Annual Analysis Complete</div><div class="cval">78.4<span class="unit">%</span></div><div class="cdelta neutral">21,608 pending</div><div class="csub">Target: 100% by Mar 31</div></div>
+      <div class="card" data-drill="esc-disbursements"><div class="clabel">Disbursements This Quarter</div><div class="cval"><span class="unit">$</span>422<span class="sm">M</span></div><div class="cdelta up">▲ Tax season peak</div><div class="csub">84,420 payments processed</div></div>
+      <div class="card" data-drill="esc-surplus"><div class="clabel">Avg Escrow Cushion</div><div class="cval"><span class="unit">$</span>1,840</div><div class="cdelta up">Above 2-month minimum</div><div class="csub">RESPA compliant</div></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 5: PAYMENT PROCESSING
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-payments">
+    <div class="page-header">
+      <div><h2>Payment <span>Processing</span></h2><p>Collections · ACH · NSF · Suspense</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card good-card" data-drill="pay-volume">
+        <div class="clabel">Payments Collected (QTD)</div>
+        <div class="cval"><span class="unit">$</span>842<span class="sm">M</span></div>
+        <div class="cdelta up">▲ 4.2% QoQ</div>
+        <div class="csub">Avg $9,988/loan/quarter</div>
+      </div>
+      <div class="card" data-drill="pay-ach">
+        <div class="clabel">ACH Enrollment Rate</div>
+        <div class="cval">72.4<span class="unit">%</span></div>
+        <div class="cdelta up">▲ 1.8 pts</div>
+        <div class="csub">61,040 of 84,312 loans</div>
+      </div>
+      <div class="card warn-card" data-drill="pay-nsf">
+        <div class="clabel">NSF / Return Rate</div>
+        <div class="cval">1.84<span class="unit">%</span></div>
+        <div class="cdelta up-bad">▲ 0.14 pts</div>
+        <div class="csub">1,551 returned this quarter</div>
+      </div>
+      <div class="card" data-drill="pay-suspense">
+        <div class="clabel">Suspense Balance</div>
+        <div class="cval"><span class="unit">$</span>2.4<span class="sm">M</span></div>
+        <div class="cdelta neutral">— 12 items unresolved</div>
+        <div class="csub">Target: clear within 72hrs</div>
+      </div>
+    </div>
+    <div class="sec-divider">Payment Channel Mix</div>
+    <div class="kpi-grid g2" style="margin-top:2px;">
+      <div class="card" data-drill="pay-channels">
+        <div class="clabel">Channel Distribution</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">ACH Auto-Pay</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:72%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--text)">72%</span></div>
+          <div class="dd-row"><span class="dd-row-label">Online Portal</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:16%"></div></div><span style="font-size:0.66rem;color:var(--text)">14%</span></div>
+          <div class="dd-row"><span class="dd-row-label">Phone / IVR</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:10%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--text)">9%</span></div>
+          <div class="dd-row"><span class="dd-row-label">Mail / Check</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:6%; background:var(--muted)"></div></div><span style="font-size:0.66rem;color:var(--text)">5%</span></div>
+        </div>
+      </div>
+      <div class="card" data-drill="pay-timing">
+        <div class="clabel">Payment Timing (Day of Month)</div>
+        <div class="spark-inline" style="height:60px; margin-top:12px; align-items:flex-end;">
+          <div class="spark-bar green-bar" style="height:90%"></div>
+          <div class="spark-bar green-bar" style="height:100%"></div>
+          <div class="spark-bar green-bar" style="height:85%"></div>
+          <div class="spark-bar" style="height:30%"></div>
+          <div class="spark-bar" style="height:20%"></div>
+          <div class="spark-bar" style="height:15%"></div>
+          <div class="spark-bar red-bar" style="height:45%"></div>
+          <div class="spark-bar red-bar" style="height:35%"></div>
+          <div class="spark-bar red-bar" style="height:28%"></div>
+          <div class="spark-bar" style="height:18%"></div>
+          <div class="spark-bar" style="height:12%"></div>
+          <div class="spark-bar" style="height:10%"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:5px;">
+          <span style="font-size:0.54rem; color:var(--green);">Day 1–3 (peak)</span>
+          <span style="font-size:0.54rem; color:var(--red);">Day 7–15 (grace)</span>
+          <span style="font-size:0.54rem; color:var(--muted);">Day 16+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 6: FORECLOSURE
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-foreclosure">
+    <div class="page-header">
+      <div><h2>Foreclosure <span>Pipeline</span></h2><p>REO · Active Referrals · State Timelines</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card alert-card" data-drill="fc-active"><div class="clabel">Active Foreclosures</div><div class="cval">312</div><div class="cdelta up-bad">▲ 18 new referrals</div><div class="csub">$68.4M UPB at risk</div></div>
+      <div class="card" data-drill="fc-reo"><div class="clabel">REO Properties</div><div class="cval">84</div><div class="cdelta neutral">— 6 sold this quarter</div><div class="csub">Avg days in REO: 142</div></div>
+      <div class="card warn-card" data-drill="fc-timeline"><div class="clabel">Avg Days to FC Sale</div><div class="cval">384<span class="unit"> days</span></div><div class="cdelta up-bad">▲ 22 days above target</div><div class="csub">Judicial states avg: 480d</div></div>
+      <div class="card" data-drill="fc-loss"><div class="clabel">Avg Loss Severity</div><div class="cval">28.4<span class="unit">%</span></div><div class="cdelta down-good">▼ 1.8 pts</div><div class="csub">Industry avg: 32.1%</div></div>
+    </div>
+    <div class="sec-divider">Foreclosure by State (Top 5)</div>
+    <div class="card" style="padding:20px 24px; cursor:default;">
+      <table class="data-table">
+        <thead><tr><th>State</th><th>Active FC</th><th>Avg Timeline</th><th>Judicial</th><th>REO Count</th><th>UPB at Risk</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Florida</td><td>74</td><td>480 days</td><td><span class="pill green">Yes</span></td><td>22</td><td>$16.2M</td><td><span class="pill red">Elevated</span></td></tr>
+          <tr><td>New York</td><td>58</td><td>520 days</td><td><span class="pill green">Yes</span></td><td>18</td><td>$14.8M</td><td><span class="pill red">Elevated</span></td></tr>
+          <tr><td>Texas</td><td>48</td><td>180 days</td><td><span class="pill red">No</span></td><td>10</td><td>$9.4M</td><td><span class="pill yellow">Watch</span></td></tr>
+          <tr><td>California</td><td>42</td><td>240 days</td><td><span class="pill red">No</span></td><td>14</td><td>$11.2M</td><td><span class="pill yellow">Watch</span></td></tr>
+          <tr><td>Illinois</td><td>32</td><td>380 days</td><td><span class="pill green">Yes</span></td><td>8</td><td>$7.0M</td><td><span class="pill blue">Normal</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 7: CUSTOMER SERVICE
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-customer">
+    <div class="page-header">
+      <div><h2>Customer <span>Service</span></h2><p>Call Center · CSAT · Complaints · Resolution</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card good-card" data-drill="cs-csat"><div class="clabel">CSAT Score</div><div class="cval">4.2<span class="unit">/5</span></div><div class="cdelta up">▲ 0.2 pts QoQ</div><div class="csub">12,840 surveys collected</div></div>
+      <div class="card" data-drill="cs-calls"><div class="clabel">Call Volume (QTD)</div><div class="cval">48,420</div><div class="cdelta down-good">▼ 4.8% (self-service ↑)</div><div class="csub">Avg handle time: 6.4 min</div></div>
+      <div class="card good-card" data-drill="cs-fcr"><div class="clabel">First Call Resolution</div><div class="cval">78.4<span class="unit">%</span></div><div class="cdelta up">▲ 3.1 pts</div><div class="csub">Target: 80%</div></div>
+      <div class="card warn-card" data-drill="cs-complaints"><div class="clabel">CFPB Complaints</div><div class="cval">42</div><div class="cdelta up-bad">▲ 8 new this quarter</div><div class="csub">Avg resolution: 18 days</div></div>
+    </div>
+    <div class="sec-divider">Top Call Drivers</div>
+    <div class="card" style="padding:20px 24px; cursor:default; margin-top:2px;">
+      <div style="margin-top:4px;">
+        <div class="dd-row"><span class="dd-row-label">Payment Questions</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:80%"></div></div><span style="font-size:0.66rem;color:var(--text)">38,736 calls</span></div>
+        <div class="dd-row"><span class="dd-row-label">Escrow Inquiries</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:55%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--text)">26,631 calls</span></div>
+        <div class="dd-row"><span class="dd-row-label">Hardship / Forbearance</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:35%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--text)">16,947 calls</span></div>
+        <div class="dd-row"><span class="dd-row-label">Payoff Requests</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:20%; background:var(--purple)"></div></div><span style="font-size:0.66rem;color:var(--text)">9,684 calls</span></div>
+        <div class="dd-row"><span class="dd-row-label">Insurance / Lapse</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:10%; background:var(--red)"></div></div><span style="font-size:0.66rem;color:var(--text)">4,842 calls</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 8: COMPLIANCE
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-compliance">
+    <div class="page-header">
+      <div><h2>Regulatory <span>&amp; CFPB</span></h2><p>Compliance KPIs · Reg X · Reg Z · RESPA · FDCPA</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card good-card" data-drill="comp-overall"><div class="clabel">Overall Compliance Score</div><div class="cval">97.4<span class="unit">%</span></div><div class="cdelta up">▲ 0.8 pts</div><div class="csub">Target: ≥98%</div></div>
+      <div class="card warn-card" data-drill="comp-reg"><div class="clabel">Open Reg Findings</div><div class="cval">14</div><div class="cdelta up-bad">▲ 2 new this quarter</div><div class="csub">High: 2 · Medium: 8 · Low: 4</div></div>
+      <div class="card good-card" data-drill="comp-response"><div class="clabel">CFPB Response On-Time</div><div class="cval">100<span class="unit">%</span></div><div class="cdelta up">✓ All within 60 days</div><div class="csub">42 responses this quarter</div></div>
+      <div class="card" data-drill="comp-error"><div class="clabel">Error Resolution Rate</div><div class="cval">94.8<span class="unit">%</span></div><div class="cdelta up">▲ 1.2 pts</div><div class="csub">Reg X 12 CFR 1024.35</div></div>
+    </div>
+    <div class="sec-divider">Regulation Compliance Breakdown</div>
+    <div class="kpi-grid g2" style="margin-top:2px;">
+      <div class="card" data-drill="comp-detail">
+        <div class="clabel">By Regulation</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">RESPA / Reg X</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:96%; background:var(--green)"></div></div><span style="font-size:0.66rem; color:var(--green)">98.2%</span></div>
+          <div class="dd-row"><span class="dd-row-label">TILA / Reg Z</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:98%; background:var(--green)"></div></div><span style="font-size:0.66rem; color:var(--green)">99.1%</span></div>
+          <div class="dd-row"><span class="dd-row-label">FDCPA</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:94%; background:var(--yellow)"></div></div><span style="font-size:0.66rem; color:var(--yellow)">96.4%</span></div>
+          <div class="dd-row"><span class="dd-row-label">SCRA (Military)</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:100%; background:var(--green)"></div></div><span style="font-size:0.66rem; color:var(--green)">100%</span></div>
+          <div class="dd-row"><span class="dd-row-label">State-Specific</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:90%; background:var(--yellow)"></div></div><span style="font-size:0.66rem; color:var(--yellow)">92.8%</span></div>
+        </div>
+      </div>
+      <div class="card" data-drill="comp-timeline">
+        <div class="clabel">Audit Timeline (QTD)</div>
+        <div style="margin-top:12px;">
+          <div class="dd-row"><span class="dd-row-label">Audits Scheduled</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:100%"></div></div><span style="font-size:0.66rem;color:var(--text)">24</span></div>
+          <div class="dd-row"><span class="dd-row-label">Completed</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:75%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--green)">18</span></div>
+          <div class="dd-row"><span class="dd-row-label">In Progress</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:25%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--yellow)">6</span></div>
+          <div class="dd-row"><span class="dd-row-label">Findings Remediated</span><div class="dd-row-bar"><div class="dd-row-fill" style="width:70%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--green)">10/14</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 9: INVESTOR REPORTING
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-investor">
+    <div class="page-header">
+      <div><h2>Investor <span>Reporting</span></h2><p>GSE · Private Label · Remittance · P&amp;I Advances</p></div>
+    </div>
+    <div class="kpi-grid g4">
+      <div class="card good-card" data-drill="inv-remit"><div class="clabel">Remittance On-Time</div><div class="cval">100<span class="unit">%</span></div><div class="cdelta up">✓ All GSE deadlines met</div><div class="csub">Fannie · Freddie · Ginnie</div></div>
+      <div class="card" data-drill="inv-advances"><div class="clabel">P&amp;I Advances</div><div class="cval"><span class="unit">$</span>84.2<span class="sm">M</span></div><div class="cdelta up-bad">▲ $6M QoQ</div><div class="csub">Recovering: 72% success rate</div></div>
+      <div class="card good-card" data-drill="inv-reports"><div class="clabel">Investor Reports Filed</div><div class="cval">142</div><div class="cdelta up">✓ 100% on-time</div><div class="csub">FNMA · FHLMC · GNMA</div></div>
+      <div class="card warn-card" data-drill="inv-curtail"><div class="clabel">Curtailment Interest</div><div class="cval"><span class="unit">$</span>1.2<span class="sm">M</span></div><div class="cdelta up-bad">▲ Target: &lt;$800K</div><div class="csub">Late remittance interest owed</div></div>
+    </div>
+    <div class="sec-divider">Portfolio by Investor</div>
+    <div class="card" style="padding:20px 24px; cursor:default; margin-top:2px;">
+      <div style="margin-top:4px;">
+        <div class="dd-row"><span class="dd-row-label" style="width:120px;">Fannie Mae</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:72%"></div></div><span style="font-size:0.66rem;color:var(--text); min-width:60px; text-align:right;">$7.2B UPB</span><span class="pill green" style="margin-left:12px;">On Track</span></div>
+        <div class="dd-row"><span class="dd-row-label" style="width:120px;">Freddie Mac</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:52%; background:var(--green)"></div></div><span style="font-size:0.66rem;color:var(--text); min-width:60px; text-align:right;">$5.2B UPB</span><span class="pill green" style="margin-left:12px;">On Track</span></div>
+        <div class="dd-row"><span class="dd-row-label" style="width:120px;">Ginnie Mae</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:38%; background:var(--yellow)"></div></div><span style="font-size:0.66rem;color:var(--text); min-width:60px; text-align:right;">$3.8B UPB</span><span class="pill yellow" style="margin-left:12px;">Review</span></div>
+        <div class="dd-row"><span class="dd-row-label" style="width:120px;">Private Label</span><div class="dd-row-bar" style="margin:0 20px;"><div class="dd-row-fill" style="width:22%; background:var(--purple)"></div></div><span style="font-size:0.66rem;color:var(--text); min-width:60px; text-align:right;">$2.2B UPB</span><span class="pill blue" style="margin-left:12px;">Active</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 10: DARA AGENT (SNOWFLAKE CORTEX)
+  ══════════════════════════════════ -->
+  <div class="content-panel" id="panel-agent">
+    <div class="page-header">
+      <div>
+        <h2>DARA <span>Agent</span></h2>
+        <p>AI-Powered Analytics · Snowflake Cortex · Natural Language Queries</p>
+      </div>
+    </div>
+
+    <!-- Agent Configuration Bar -->
+    <div class="agent-config-bar">
+      <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+        <div class="config-status">
+          <span class="config-dot" id="dash-status"></span>
+          <span class="config-label" id="dash-label">Dashboard: Not Connected</span>
+        </div>
+        <div class="config-status">
+          <span class="config-dot" id="cortex-status"></span>
+          <span class="config-label" id="cortex-label">Cortex Agent: Not Connected</span>
+        </div>
+      </div>
+      <button class="config-btn" id="open-config-btn">⚙️ Configure Connections</button>
+    </div>
+
+    <!-- Canned Questions Section -->
+    <div class="sec-divider" style="margin-top:20px;">Quick Insights · Canned Questions</div>
+    <div class="canned-questions-grid">
+      <div class="canned-q-card" data-question="What is the current delinquency rate across all portfolios?">
+        <div class="cq-icon">📊</div>
+        <div class="cq-text">Current Delinquency Rate</div>
+        <div class="cq-desc">Get portfolio-wide DPD statistics</div>
+      </div>
+      <div class="canned-q-card" data-question="Show me loans at risk of foreclosure in the next 30 days">
+        <div class="cq-icon">⚠️</div>
+        <div class="cq-text">At-Risk Foreclosures</div>
+        <div class="cq-desc">Identify high-priority loans</div>
+      </div>
+      <div class="canned-q-card" data-question="What is the average CSAT score for customer service this quarter?">
+        <div class="cq-icon">⭐</div>
+        <div class="cq-text">Customer Satisfaction</div>
+        <div class="cq-desc">CSAT trends and breakdown</div>
+      </div>
+      <div class="canned-q-card" data-question="Which states have the highest loss mitigation activity?">
+        <div class="cq-icon">🗺️</div>
+        <div class="cq-text">Loss Mitigation by State</div>
+        <div class="cq-desc">Geographic workout analysis</div>
+      </div>
+      <div class="canned-q-card" data-question="Compare payment channel performance: ACH vs Online vs Phone">
+        <div class="cq-icon">💳</div>
+        <div class="cq-text">Payment Channel Analysis</div>
+        <div class="cq-desc">Collection efficiency metrics</div>
+      </div>
+      <div class="canned-q-card" data-question="What percentage of escrow accounts have shortages?">
+        <div class="cq-icon">🏦</div>
+        <div class="cq-text">Escrow Shortage Analysis</div>
+        <div class="cq-desc">Shortage trends and impact</div>
+      </div>
+      <div class="canned-q-card" data-question="Show me the top 10 loans by UPB in 90+ delinquency">
+        <div class="cq-icon">🔴</div>
+        <div class="cq-text">Critical Delinquencies</div>
+        <div class="cq-desc">Highest-value at-risk loans</div>
+      </div>
+      <div class="canned-q-card" data-question="What is the current compliance score breakdown by regulation?">
+        <div class="cq-icon">📋</div>
+        <div class="cq-text">Compliance Scorecard</div>
+        <div class="cq-desc">Regulatory performance detail</div>
+      </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="sec-divider" style="margin-top:32px;">Natural Language Query</div>
+    <div class="agent-chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-welcome">
+          <div class="welcome-icon">🤖</div>
+          <h3>Welcome to DARA Agent</h3>
+          <p>Ask me anything about your servicing portfolio. I can analyze data, generate reports, and provide insights using Snowflake Cortex AI.</p>
+          <p class="welcome-sub">Click a canned question above or type your own query below.</p>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea 
+          id="chat-input" 
+          placeholder="Ask a question about your portfolio data..."
+          rows="2"
+        ></textarea>
+        <button id="send-btn" class="send-btn">
+          <span>Send</span>
+          <span class="send-icon">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Agent Stats -->
+    <div class="agent-stats">
+      <div class="stat-item">
+        <span class="stat-label">Queries Today</span>
+        <span class="stat-val" id="queries-today">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Avg Response Time</span>
+        <span class="stat-val" id="avg-response">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Success Rate</span>
+        <span class="stat-val" id="success-rate">—</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ CONFIG MODAL ══ -->
+<div class="config-modal" id="config-modal">
+  <div class="config-modal-content" style="width: 720px;">
+    <div class="config-modal-close" id="config-close">✕</div>
+    <h3>Connection Configuration</h3>
+    <p>Configure separate connections for Dashboard data and DARA Agent (Cortex)</p>
+    
+    <!-- Tab Switcher -->
+    <div class="config-tabs">
+      <button class="config-tab active" data-tab="dashboard">Dashboard Connection</button>
+      <button class="config-tab" data-tab="cortex">DARA Agent (Cortex)</button>
+    </div>
+    
+    <!-- Dashboard Connection Form -->
+    <form id="config-form-dashboard" class="config-tab-content active">
+      <div class="config-section-header">
+        <span class="config-section-icon">📊</span>
+        <div>
+          <h4>Dashboard Data Connection</h4>
+          <p class="config-section-desc">SSO or service account connection for KPI dashboard data retrieval</p>
+        </div>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">Authentication Method</label>
+        <select class="config-form-input" id="dash-auth-method">
+          <option value="sso">SSO (Browser Authentication)</option>
+          <option value="keypair">Service Account (Key-Pair)</option>
+        </select>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">Snowflake Account</label>
+        <input type="text" class="config-form-input" id="dash-account" placeholder="xy12345.us-east-1 or orgname-accountname" />
+      </div>
+      
+      <div class="config-form-group" id="dash-user-group">
+        <label class="config-form-label">User / Service Account</label>
+        <input type="text" class="config-form-input" id="dash-user" placeholder="john.doe@company.com or svc_dashboard" />
+      </div>
+      
+      <div class="config-form-row">
+        <div class="config-form-group">
+          <label class="config-form-label">Database</label>
+          <input type="text" class="config-form-input" id="dash-database" placeholder="ANALYTICS_DB" />
+        </div>
+        
+        <div class="config-form-group">
+          <label class="config-form-label">Schema</label>
+          <input type="text" class="config-form-input" id="dash-schema" placeholder="PUBLIC" />
+        </div>
+      </div>
+      
+      <div class="config-form-row">
+        <div class="config-form-group">
+          <label class="config-form-label">Warehouse</label>
+          <input type="text" class="config-form-input" id="dash-warehouse" placeholder="COMPUTE_WH" />
+        </div>
+        
+        <div class="config-form-group">
+          <label class="config-form-label">Role</label>
+          <input type="text" class="config-form-input" id="dash-role" placeholder="ANALYST_ROLE" />
+        </div>
+      </div>
+      
+      <div id="dash-keypair-section" style="display:none;">
+        <div class="config-form-group">
+          <label class="config-form-label">Private Key Path (for service account)</label>
+          <input type="text" class="config-form-input" id="dash-private-key-path" placeholder="/path/to/rsa_key.p8" />
+        </div>
+        
+        <div class="config-form-group">
+          <label class="config-form-label">Private Key Passphrase (optional)</label>
+          <input type="password" class="config-form-input" id="dash-private-key-pass" placeholder="Leave blank if unencrypted" />
+        </div>
+      </div>
+      
+      <div class="config-test-result" id="dash-test-result"></div>
+      
+      <div class="config-form-actions">
+        <button type="button" class="config-btn-secondary" id="test-dash-connection-btn">Test Connection</button>
+        <button type="submit" class="config-btn-primary">Save Dashboard Config</button>
+      </div>
+    </form>
+    
+    <!-- Cortex Agent Connection Form -->
+    <form id="config-form-cortex" class="config-tab-content">
+      <div class="config-section-header">
+        <span class="config-section-icon">🤖</span>
+        <div>
+          <h4>DARA Agent Connection (Snowflake Cortex)</h4>
+          <p class="config-section-desc">Personal Access Token (PAT) based authentication for Cortex AI</p>
+        </div>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">Snowflake Account</label>
+        <input type="text" class="config-form-input" id="cortex-account" placeholder="xy12345.us-east-1 or orgname-accountname" />
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">Personal Access Token (PAT) *</label>
+        <input type="password" class="config-form-input" id="cortex-pat" placeholder="sfp_xxxxxxxxxxxxxxxxxxxxxx" />
+        <div class="config-helper-text">
+          Generate a PAT in Snowflake: Account Settings → Security → Personal Access Tokens
+        </div>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">User</label>
+        <input type="text" class="config-form-input" id="cortex-user" placeholder="CORTEX_USER" />
+      </div>
+      
+      <div class="config-form-row">
+        <div class="config-form-group">
+          <label class="config-form-label">Database</label>
+          <input type="text" class="config-form-input" id="cortex-database" placeholder="ANALYTICS_DB" />
+        </div>
+        
+        <div class="config-form-group">
+          <label class="config-form-label">Schema</label>
+          <input type="text" class="config-form-input" id="cortex-schema" placeholder="CORTEX" />
+        </div>
+      </div>
+      
+      <div class="config-form-row">
+        <div class="config-form-group">
+          <label class="config-form-label">Warehouse</label>
+          <input type="text" class="config-form-input" id="cortex-warehouse" placeholder="CORTEX_WH" />
+        </div>
+        
+        <div class="config-form-group">
+          <label class="config-form-label">Role</label>
+          <input type="text" class="config-form-input" id="cortex-role" placeholder="CORTEX_ROLE" />
+        </div>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">Cortex Model</label>
+        <select class="config-form-input" id="cortex-model">
+          <option value="snowflake-arctic">snowflake-arctic (Recommended)</option>
+          <option value="llama3-70b">llama3-70b</option>
+          <option value="llama3.1-70b">llama3.1-70b</option>
+          <option value="llama3.1-405b">llama3.1-405b (Most Capable)</option>
+          <option value="mistral-large">mistral-large</option>
+          <option value="mixtral-8x7b">mixtral-8x7b</option>
+          <option value="reka-flash">reka-flash</option>
+        </select>
+      </div>
+      
+      <div class="config-form-group">
+        <label class="config-form-label">
+          <input type="checkbox" id="cortex-enable-search" style="margin-right: 8px;">
+          Enable Cortex Search (for semantic search on documentation)
+        </label>
+      </div>
+      
+      <div class="config-test-result" id="cortex-test-result"></div>
+      
+      <div class="config-form-actions">
+        <button type="button" class="config-btn-secondary" id="test-cortex-connection-btn">Test Connection</button>
+        <button type="submit" class="config-btn-primary">Save Cortex Config</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ DRILL-DOWN OVERLAY ══ -->
+<div class="drilldown-overlay" id="drilldown">
+  <div class="drilldown-panel" id="drilldown-content">
+    <div class="dd-close" id="dd-close">✕</div>
+    <div id="dd-body"></div>
+  </div>
+</div>
+
+<script>
+// ── NAV ROUTING ──
+const navItems = document.querySelectorAll('.nav-item[data-panel]');
+const panels = document.querySelectorAll('.content-panel');
+const breadcrumb = document.getElementById('breadcrumb-current');
+
+const panelLabels = {
+  portfolio: 'Portfolio Overview',
+  delinquency: 'Delinquency Management',
+  'loss-mit': 'Loss Mitigation',
+  escrow: 'Escrow & Taxes',
+  payments: 'Payment Processing',
+  foreclosure: 'Foreclosure Pipeline',
+  customer: 'Customer Service',
+  compliance: 'Regulatory & CFPB',
+  investor: 'Investor Reporting',
+  agent: 'DARA Agent'
+};
+
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    navItems.forEach(n => n.classList.remove('active'));
+    panels.forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    const pid = item.dataset.panel;
+    document.getElementById('panel-' + pid).classList.add('active');
+    breadcrumb.textContent = panelLabels[pid] || pid;
+  });
+});
+
+// ── PERIOD TABS ──
+document.querySelectorAll('.period-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+  });
+});
+
+// ── DRILL-DOWN DATA ──
+const drillData = {
+  'portfolio-upa': {
+    title: 'Unpaid Principal Balance',
+    subtitle: 'Drill-Down · Portfolio Detail',
+    rows: [
+      { label: '30yr Fixed', bar: 62, val: '$11.4B', fill: 'var(--dara-blue)' },
+      { label: '15yr Fixed', bar: 19, val: '$3.5B', fill: 'var(--green)' },
+      { label: 'ARM Products', bar: 12, val: '$2.2B', fill: 'var(--yellow)' },
+      { label: 'Jumbo', bar: 7, val: '$1.3B', fill: 'var(--purple)' },
+    ],
+    extra: '<div class="dd-section">QoQ Change</div><div class="dd-row"><span class="dd-row-label">Q3 2025</span><span style="font-size:0.72rem;color:var(--text)">$18.02B</span></div><div class="dd-row"><span class="dd-row-label">Q4 2025</span><span style="font-size:0.72rem;color:var(--text)">$18.21B</span></div><div class="dd-row"><span class="dd-row-label">Q1 2026 (current)</span><span style="font-size:0.72rem;color:var(--dara-blue)">$18.4B ▲2.1%</span></div>'
+  },
+  'delinq-90': {
+    title: '90+ Day Delinquency',
+    subtitle: 'Drill-Down · Critical Bucket · 624 Loans',
+    rows: [
+      { label: 'California', bar: 24, val: '150 loans', fill: 'var(--red)' },
+      { label: 'Florida', bar: 20, val: '125 loans', fill: 'var(--red)' },
+      { label: 'New York', bar: 16, val: '100 loans', fill: 'var(--yellow)' },
+      { label: 'Texas', bar: 14, val: '87 loans', fill: 'var(--yellow)' },
+      { label: 'Other States', bar: 26, val: '162 loans', fill: 'var(--muted)' },
+    ],
+    extra: '<div class="dd-section">Loss Mitigation Status</div><div class="dd-row"><span class="dd-row-label">In Active Workout</span><span style="font-size:0.72rem;color:var(--green)">318 (51%)</span></div><div class="dd-row"><span class="dd-row-label">FC Referred</span><span style="font-size:0.72rem;color:var(--red)">142 (23%)</span></div><div class="dd-row"><span class="dd-row-label">Pending Contact</span><span style="font-size:0.72rem;color:var(--yellow)">164 (26%)</span></div>'
+  },
+  'delinq-30': {
+    title: '30-Day Delinquency',
+    subtitle: 'Drill-Down · 2,394 Loans · $522M UPB',
+    rows: [
+      { label: 'First Occurrence', bar: 72, val: '1,724 loans', fill: 'var(--yellow)' },
+      { label: 'Repeat (2nd time)', bar: 18, val: '431 loans', fill: 'var(--red)' },
+      { label: 'Re-default', bar: 10, val: '239 loans', fill: 'var(--red)' },
+    ],
+    extra: '<div class="dd-section">Collection Activity</div><div class="dd-row"><span class="dd-row-label">Contacted This Week</span><span style="font-size:0.72rem;color:var(--green)">1,842 (77%)</span></div><div class="dd-row"><span class="dd-row-label">Payment Promised</span><span style="font-size:0.72rem;color:var(--yellow)">621 (26%)</span></div><div class="dd-row"><span class="dd-row-label">No Contact</span><span style="font-size:0.72rem;color:var(--red)">552 (23%)</span></div>'
+  },
+  'lm-active': {
+    title: 'Active Workout Plans',
+    subtitle: 'Drill-Down · Loss Mitigation Detail',
+    rows: [
+      { label: 'Repayment Plans', bar: 41, val: '514', fill: 'var(--green)' },
+      { label: 'Forbearance', bar: 27, val: '342', fill: 'var(--yellow)' },
+      { label: 'Modifications', bar: 17, val: '214', fill: 'var(--dara-blue)' },
+      { label: 'DIL / Short Sale', bar: 8, val: '96', fill: 'var(--red)' },
+      { label: 'Partial Claim', bar: 7, val: '82', fill: 'var(--purple)' },
+    ],
+    extra: '<div class="dd-section">Vintage Breakdown</div><div class="dd-row"><span class="dd-row-label">2022–2023 Origination</span><span style="font-size:0.72rem;color:var(--red)">42% of workouts</span></div><div class="dd-row"><span class="dd-row-label">2020–2021 (COVID)</span><span style="font-size:0.72rem;color:var(--yellow)">31% of workouts</span></div>'
+  },
+  'pay-volume': {
+    title: 'Payment Collections',
+    subtitle: 'Drill-Down · QTD Detail',
+    rows: [
+      { label: 'ACH / EFT', bar: 72, val: '$606M', fill: 'var(--green)' },
+      { label: 'Online Portal', bar: 14, val: '$118M', fill: 'var(--dara-blue)' },
+      { label: 'Phone / IVR', bar: 9, val: '$76M', fill: 'var(--yellow)' },
+      { label: 'Mail / Check', bar: 5, val: '$42M', fill: 'var(--muted)' },
+    ],
+    extra: '<div class="dd-section">Monthly Trend</div><div class="dd-row"><span class="dd-row-label">October 2025</span><span style="font-size:0.72rem;color:var(--text)">$268M</span></div><div class="dd-row"><span class="dd-row-label">November 2025</span><span style="font-size:0.72rem;color:var(--text)">$272M</span></div><div class="dd-row"><span class="dd-row-label">December 2025</span><span style="font-size:0.72rem;color:var(--text)">$302M</span></div>'
+  },
+  'fc-active': {
+    title: 'Active Foreclosures',
+    subtitle: 'Drill-Down · 312 Loans · $68.4M UPB',
+    rows: [
+      { label: 'Pre-Sale', bar: 55, val: '172 loans', fill: 'var(--red)' },
+      { label: 'Sale Scheduled', bar: 20, val: '62 loans', fill: 'var(--yellow)' },
+      { label: 'Post-Sale / REO', bar: 25, val: '78 loans', fill: 'var(--muted)' },
+    ],
+    extra: '<div class="dd-section">Time in Foreclosure</div><div class="dd-row"><span class="dd-row-label">&lt; 6 months</span><span style="font-size:0.72rem;color:var(--green)">88 loans</span></div><div class="dd-row"><span class="dd-row-label">6–12 months</span><span style="font-size:0.72rem;color:var(--yellow)">124 loans</span></div><div class="dd-row"><span class="dd-row-label">&gt; 12 months</span><span style="font-size:0.72rem;color:var(--red)">100 loans</span></div>'
+  },
+  'comp-reg': {
+    title: 'Open Regulatory Findings',
+    subtitle: 'Drill-Down · 14 Open Items',
+    rows: [
+      { label: 'High Severity', bar: 14, val: '2 items', fill: 'var(--red)' },
+      { label: 'Medium Severity', bar: 57, val: '8 items', fill: 'var(--yellow)' },
+      { label: 'Low Severity', bar: 29, val: '4 items', fill: 'var(--green)' },
+    ],
+    extra: '<div class="dd-section">By Regulation</div><div class="dd-row"><span class="dd-row-label">FDCPA Violations</span><span style="font-size:0.72rem;color:var(--red)">2 high — remediation due Mar 15</span></div><div class="dd-row"><span class="dd-row-label">State Compliance</span><span style="font-size:0.72rem;color:var(--yellow)">5 medium — under review</span></div><div class="dd-row"><span class="dd-row-label">RESPA Timing</span><span style="font-size:0.72rem;color:var(--yellow)">3 medium — corrected</span></div>'
+  }
+};
+
+// ── DRILL OPEN / CLOSE ──
+function openDrill(key) {
+  const data = drillData[key];
+  if (!data) return;
+
+  let html = `
+    <div class="dd-title">${data.title}</div>
+    <div class="dd-subtitle">${data.subtitle}</div>
+  `;
+
+  if (data.rows) {
+    data.rows.forEach(r => {
+      html += `<div class="dd-row">
+        <span class="dd-row-label">${r.label}</span>
+        <div class="dd-row-bar"><div class="dd-row-fill" style="width:${r.bar}%; background:${r.fill || 'var(--dara-blue)'}"></div></div>
+        <span style="font-size:0.7rem;color:var(--text);min-width:70px;text-align:right;">${r.val}</span>
+      </div>`;
+    });
+  }
+
+  if (data.extra) html += data.extra;
+
+  document.getElementById('dd-body').innerHTML = html;
+  document.getElementById('drilldown').classList.add('open');
+}
+
+document.querySelectorAll('.card[data-drill]').forEach(card => {
+  card.addEventListener('click', () => openDrill(card.dataset.drill));
+});
+
+document.getElementById('dd-close').addEventListener('click', () => {
+  document.getElementById('drilldown').classList.remove('open');
+});
+
+document.getElementById('drilldown').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// ══════════════════════════════════
+// DARA AGENT FUNCTIONALITY
+// ══════════════════════════════════
+
+const AgentManager = {
+  dashboardConfig: {
+    connected: false,
+    authMethod: 'sso',
+    account: '',
+    user: '',
+    database: '',
+    schema: '',
+    warehouse: '',
+    role: '',
+    privateKeyPath: '',
+    privateKeyPass: ''
+  },
+  
+  cortexConfig: {
+    connected: false,
+    account: '',
+    user: '',
+    pat: '', // Personal Access Token
+    database: '',
+    schema: '',
+    warehouse: '',
+    role: '',
+    model: 'snowflake-arctic',
+    enableSearch: false
+  },
+  
+  stats: {
+    queriesTotal: 0,
+    responseTimes: [],
+    successCount: 0
+  },
+  
+  init() {
+    // Load saved configs from localStorage
+    const savedDashConfig = localStorage.getItem('dara-dashboard-config');
+    const savedCortexConfig = localStorage.getItem('dara-cortex-config');
+    
+    if (savedDashConfig) {
+      this.dashboardConfig = { ...this.dashboardConfig, ...JSON.parse(savedDashConfig) };
+    }
+    
+    if (savedCortexConfig) {
+      this.cortexConfig = { ...this.cortexConfig, ...JSON.parse(savedCortexConfig) };
+    }
+    
+    // Update connection status for both
+    this.updateConnectionStatus();
+    
+    // Event listeners
+    document.getElementById('open-config-btn').addEventListener('click', () => this.openConfigModal());
+    document.getElementById('config-close').addEventListener('click', () => this.closeConfigModal());
+    document.getElementById('config-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'config-modal') this.closeConfigModal();
+    });
+    
+    // Tab switching
+    document.querySelectorAll('.config-tab').forEach(tab => {
+      tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+    });
+    
+    // Dashboard form
+    document.getElementById('config-form-dashboard').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveDashboardConfig();
+    });
+    
+    // Cortex form
+    document.getElementById('config-form-cortex').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.saveCortexConfig();
+    });
+    
+    // Test connection buttons
+    document.getElementById('test-dash-connection-btn').addEventListener('click', () => this.testDashboardConnection());
+    document.getElementById('test-cortex-connection-btn').addEventListener('click', () => this.testCortexConnection());
+    
+    // Auth method toggle
+    document.getElementById('dash-auth-method').addEventListener('change', (e) => {
+      this.toggleAuthMethod(e.target.value);
+    });
+    
+    // Chat functionality
+    document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
+    document.getElementById('chat-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendMessage();
+      }
+    });
+    
+    // Canned questions
+    document.querySelectorAll('.canned-q-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const question = card.dataset.question;
+        document.getElementById('chat-input').value = question;
+        this.sendMessage();
+      });
+    });
+    
+    this.updateStats();
+  },
+  
+  switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.config-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.config-tab-content').forEach(content => {
+      if (content.id === `config-form-${tabName}`) {
+        content.classList.add('active');
+      } else {
+        content.classList.remove('active');
+      }
+    });
+  },
+  
+  toggleAuthMethod(method) {
+    const keypairSection = document.getElementById('dash-keypair-section');
+    if (method === 'keypair') {
+      keypairSection.style.display = 'block';
+    } else {
+      keypairSection.style.display = 'none';
+    }
+  },
+  
+  openConfigModal() {
+    // Populate dashboard form
+    document.getElementById('dash-auth-method').value = this.dashboardConfig.authMethod || 'sso';
+    document.getElementById('dash-account').value = this.dashboardConfig.account || '';
+    document.getElementById('dash-user').value = this.dashboardConfig.user || '';
+    document.getElementById('dash-database').value = this.dashboardConfig.database || '';
+    document.getElementById('dash-schema').value = this.dashboardConfig.schema || '';
+    document.getElementById('dash-warehouse').value = this.dashboardConfig.warehouse || '';
+    document.getElementById('dash-role').value = this.dashboardConfig.role || '';
+    document.getElementById('dash-private-key-path').value = this.dashboardConfig.privateKeyPath || '';
+    
+    this.toggleAuthMethod(this.dashboardConfig.authMethod || 'sso');
+    
+    // Populate cortex form
+    document.getElementById('cortex-account').value = this.cortexConfig.account || '';
+    document.getElementById('cortex-user').value = this.cortexConfig.user || '';
+    document.getElementById('cortex-pat').value = this.cortexConfig.pat || '';
+    document.getElementById('cortex-database').value = this.cortexConfig.database || '';
+    document.getElementById('cortex-schema').value = this.cortexConfig.schema || '';
+    document.getElementById('cortex-warehouse').value = this.cortexConfig.warehouse || '';
+    document.getElementById('cortex-role').value = this.cortexConfig.role || '';
+    document.getElementById('cortex-model').value = this.cortexConfig.model || 'snowflake-arctic';
+    document.getElementById('cortex-enable-search').checked = this.cortexConfig.enableSearch || false;
+    
+    document.getElementById('config-modal').classList.add('open');
+  },
+  
+  closeConfigModal() {
+    document.getElementById('config-modal').classList.remove('open');
+    document.getElementById('dash-test-result').className = 'config-test-result';
+    document.getElementById('cortex-test-result').className = 'config-test-result';
+  },
+  
+  saveDashboardConfig() {
+    this.dashboardConfig.authMethod = document.getElementById('dash-auth-method').value;
+    this.dashboardConfig.account = document.getElementById('dash-account').value;
+    this.dashboardConfig.user = document.getElementById('dash-user').value;
+    this.dashboardConfig.database = document.getElementById('dash-database').value;
+    this.dashboardConfig.schema = document.getElementById('dash-schema').value;
+    this.dashboardConfig.warehouse = document.getElementById('dash-warehouse').value;
+    this.dashboardConfig.role = document.getElementById('dash-role').value;
+    this.dashboardConfig.privateKeyPath = document.getElementById('dash-private-key-path').value;
+    this.dashboardConfig.privateKeyPass = document.getElementById('dash-private-key-pass').value;
+    this.dashboardConfig.connected = true;
+    
+    // Save to localStorage (excluding sensitive data in production)
+    const configToSave = { ...this.dashboardConfig };
+    delete configToSave.privateKeyPass; // Don't persist password
+    localStorage.setItem('dara-dashboard-config', JSON.stringify(configToSave));
+    
+    this.updateConnectionStatus();
+    this.addSystemMessage('✅ Dashboard connection configuration saved!');
+    
+    // Show success feedback
+    const resultDiv = document.getElementById('dash-test-result');
+    resultDiv.textContent = '✓ Configuration saved successfully!';
+    resultDiv.className = 'config-test-result success';
+  },
+  
+  saveCortexConfig() {
+    this.cortexConfig.account = document.getElementById('cortex-account').value;
+    this.cortexConfig.user = document.getElementById('cortex-user').value;
+    this.cortexConfig.pat = document.getElementById('cortex-pat').value;
+    this.cortexConfig.database = document.getElementById('cortex-database').value;
+    this.cortexConfig.schema = document.getElementById('cortex-schema').value;
+    this.cortexConfig.warehouse = document.getElementById('cortex-warehouse').value;
+    this.cortexConfig.role = document.getElementById('cortex-role').value;
+    this.cortexConfig.model = document.getElementById('cortex-model').value;
+    this.cortexConfig.enableSearch = document.getElementById('cortex-enable-search').checked;
+    this.cortexConfig.connected = true;
+    
+    // Save to localStorage (in production, PAT should be stored more securely)
+    localStorage.setItem('dara-cortex-config', JSON.stringify(this.cortexConfig));
+    
+    this.updateConnectionStatus();
+    this.addSystemMessage('✅ DARA Agent connected to Snowflake Cortex successfully!');
+    
+    // Show success feedback
+    const resultDiv = document.getElementById('cortex-test-result');
+    resultDiv.textContent = '✓ Cortex configuration saved successfully!';
+    resultDiv.className = 'config-test-result success';
+    
+    setTimeout(() => this.closeConfigModal(), 1500);
+  },
+  
+  testDashboardConnection() {
+    const resultDiv = document.getElementById('dash-test-result');
+    resultDiv.textContent = '⏳ Testing dashboard connection...';
+    resultDiv.className = 'config-test-result loading';
+    
+    const account = document.getElementById('dash-account').value;
+    const user = document.getElementById('dash-user').value;
+    const authMethod = document.getElementById('dash-auth-method').value;
+    
+    // Simulate connection test (in production, this would call actual Snowflake API)
+    setTimeout(() => {
+      if (account && user && account.length > 5) {
+        resultDiv.textContent = `✓ Dashboard connection successful! (${authMethod.toUpperCase()} auth)`;
+        resultDiv.className = 'config-test-result success';
+      } else {
+        resultDiv.textContent = '✗ Connection failed. Please check account and user fields.';
+        resultDiv.className = 'config-test-result error';
+      }
+    }, 1500);
+  },
+  
+  testCortexConnection() {
+    const resultDiv = document.getElementById('cortex-test-result');
+    resultDiv.textContent = '⏳ Testing Cortex connection with PAT...';
+    resultDiv.className = 'config-test-result loading';
+    
+    const account = document.getElementById('cortex-account').value;
+    const pat = document.getElementById('cortex-pat').value;
+    const model = document.getElementById('cortex-model').value;
+    
+    // Simulate connection test (in production, this would call actual Cortex API)
+    setTimeout(() => {
+      if (account && pat && pat.startsWith('sfp_') && account.length > 5) {
+        resultDiv.textContent = `✓ Cortex connection successful! Model: ${model}`;
+        resultDiv.className = 'config-test-result success';
+      } else if (!pat.startsWith('sfp_')) {
+        resultDiv.textContent = '✗ Invalid PAT format. Should start with "sfp_"';
+        resultDiv.className = 'config-test-result error';
+      } else {
+        resultDiv.textContent = '✗ Connection failed. Please check your credentials.';
+        resultDiv.className = 'config-test-result error';
+      }
+    }, 2000);
+  },
+  
+  updateConnectionStatus() {
+    // Update Dashboard status
+    const dashStatusDot = document.getElementById('dash-status');
+    const dashStatusLabel = document.getElementById('dash-label');
+    
+    if (this.dashboardConfig.connected && this.dashboardConfig.account) {
+      dashStatusDot.classList.add('connected');
+      const authType = this.dashboardConfig.authMethod === 'sso' ? 'SSO' : 'Key-Pair';
+      dashStatusLabel.textContent = `Dashboard: Connected (${authType} · ${this.dashboardConfig.account})`;
+    } else {
+      dashStatusDot.classList.remove('connected');
+      dashStatusLabel.textContent = 'Dashboard: Not Connected';
+    }
+    
+    // Update Cortex status
+    const cortexStatusDot = document.getElementById('cortex-status');
+    const cortexStatusLabel = document.getElementById('cortex-label');
+    
+    if (this.cortexConfig.connected && this.cortexConfig.account) {
+      cortexStatusDot.classList.add('connected');
+      cortexStatusLabel.textContent = `Cortex Agent: Connected via PAT (${this.cortexConfig.model})`;
+    } else {
+      cortexStatusDot.classList.remove('connected');
+      cortexStatusLabel.textContent = 'Cortex Agent: Not Connected';
+    }
+  },
+  
+  sendMessage() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    if (!this.cortexConfig.connected) {
+      this.addSystemMessage('⚠️ Please configure DARA Agent (Cortex) connection first.');
+      return;
+    }
+    
+    // Clear input
+    input.value = '';
+    
+    // Add user message
+    this.addUserMessage(message);
+    
+    // Show typing indicator
+    this.showTypingIndicator();
+    
+    // Simulate API call to Cortex (in production, this would call Snowflake Cortex API with PAT)
+    const startTime = Date.now();
+    setTimeout(() => {
+      this.hideTypingIndicator();
+      const response = this.generateCortexResponse(message);
+      this.addAgentMessage(response);
+      
+      // Update stats
+      const responseTime = Date.now() - startTime;
+      this.stats.queriesTotal++;
+      this.stats.responseTimes.push(responseTime);
+      this.stats.successCount++;
+      this.updateStats();
+    }, 1500 + Math.random() * 1000);
+  },
+  
+  generateCortexResponse(question) {
+    // Simulated responses based on canned questions
+    const responses = {
+      'delinquency': `Based on the current portfolio data:
+
+📊 **Delinquency Overview (as of Feb 12, 2026)**
+• 30-Day DPD: 2.84% (2,394 loans, $522M UPB) ▲ 0.3 pts WoW
+• 60-Day DPD: 1.12% (944 loans, $206M UPB) ▲ 0.1 pts WoW  
+• 90+ Day DPD: 0.74% (624 loans, $136M UPB) ⚠️ ▲ 0.22 pts (ALERT)
+• **Total Delinquency: 3.8%** across all buckets
+
+The 90+ bucket has exceeded the 10-loan threshold with 14 new entries this week. Immediate review recommended for loans in CA (150), FL (125), and NY (100).`,
+
+      'foreclosure': `🏘️ **At-Risk Foreclosures (Next 30 Days)**
+
+I've identified **47 loans** at high risk of foreclosure entry:
+
+**By Stage:**
+• Pre-Sale: 28 loans ($6.2M UPB)
+• Sale Scheduled: 12 loans ($2.8M UPB)  
+• Post-Sale/REO: 7 loans ($1.4M UPB)
+
+**Geographic Concentration:**
+• Florida: 14 loans (avg 480 days in FC)
+• New York: 11 loans (avg 520 days)
+• Texas: 8 loans (avg 180 days)
+
+**Recommended Actions:**
+1. Initiate loss mitigation outreach for pre-sale loans
+2. Review payment arrangements for 12 sale-scheduled accounts
+3. Expedite REO disposition in judicial states`,
+
+      'csat': `⭐ **Customer Satisfaction Analysis (Q1 2026)**
+
+**Overall CSAT Score: 4.2/5** ▲ 0.2 pts QoQ
+
+**Breakdown by Channel:**
+• Phone Support: 4.4/5 (12,420 surveys)
+• Online Portal: 4.1/5 (8,840 surveys)
+• Email Response: 3.9/5 (2,580 surveys)
+
+**Top Drivers of Satisfaction:**
+✓ First Call Resolution: 78.4% (▲ 3.1 pts)
+✓ Avg Handle Time: 6.4 min (within target)
+✓ Agent Knowledge: 4.6/5
+
+**Areas for Improvement:**
+⚠️ Escrow inquiry wait times (avg 8.2 min)
+⚠️ Complex issue escalation (18% of calls)
+
+Industry benchmark: 3.8/5 — **We're outperforming by 10.5%**`,
+
+      'payment': `💳 **Payment Channel Performance Comparison (QTD)**
+
+**Collection Volume: $842M total**
+
+| Channel | Volume | % Share | Success Rate | Avg Cost |
+|---------|--------|---------|--------------|----------|
+| ACH Auto-Pay | $606M | 72% | 98.2% | $0.15 |
+| Online Portal | $118M | 14% | 96.8% | $0.45 |
+| Phone/IVR | $76M | 9% | 94.1% | $2.20 |
+| Mail/Check | $42M | 5% | 89.4% | $3.80 |
+
+**Key Insights:**
+✓ ACH has lowest cost & highest success rate
+⚠️ NSF rate elevated in phone channel (2.4% vs 1.2% overall)
+📈 Online portal adoption ▲ 1.8% QoQ
+
+**Recommendation:** Increase ACH enrollment via portal prompts. Projected savings: $180K annually if we move 5% from phone to ACH.`,
+
+      'escrow': `🏦 **Escrow Shortage Analysis**
+
+**Total Accounts with Shortages: 3,842** (4.6% of portfolio)
+▲ 214 new shortages this quarter
+
+**Total Shortage Amount: $18.4M**
+• Avg per account: $4,788
+• Median: $2,840
+
+**Root Causes:**
+• Property Tax Increases: 58% (2,228 accounts)
+• Insurance Premium Hikes: 31% (1,191 accounts)  
+• Initial Escrow Under-Collection: 11% (423 accounts)
+
+**Geographic Hotspots:**
+• Texas: 892 shortages (property tax reassessments)
+• Florida: 744 shortages (insurance crisis)
+• California: 612 shortages
+
+**Action Plan:**
+1. Annual escrow analysis: 78.4% complete (target: 100% by Mar 31)
+2. Payment plan enrollment: 2,841 borrowers contacted
+3. Avg shortage recovery timeline: 6.2 months`,
+
+      'default': `I've analyzed your query and here's what I found based on current servicing data:
+
+${question.includes('loan') ? '📊 **Portfolio Analysis**\n\nBased on your question about loans, here are the key metrics:\n\n• Total Active Loans: 84,312\n• Total UPB: $18.4B\n• Avg Loan Balance: $218,200\n• Current Rate: 96.2%' : ''}
+
+${question.includes('compliance') ? '📋 **Compliance Scorecard (Q1 2026)**\n\n• Overall Score: 97.4% ▲ 0.8 pts\n• RESPA/Reg X: 98.2%\n• TILA/Reg Z: 99.1%\n• FDCPA: 96.4%\n• SCRA: 100%\n• State-Specific: 92.8%\n\n⚠️ 14 open findings (2 high, 8 medium, 4 low)' : ''}
+
+${question.includes('state') || question.includes('geographic') ? '🗺️ **Geographic Distribution**\n\nTop States by UPB:\n• California: $3.8B (21%)\n• Texas: $2.9B (16%)\n• Florida: $2.3B (13%)\n• New York: $1.8B (10%)\n• Others: $7.6B (40%)' : ''}
+
+Would you like me to drill down into any specific area or generate a detailed report?`
+    };
+    
+    // Determine which response to use
+    const lowerQ = question.toLowerCase();
+    if (lowerQ.includes('delinq')) return responses.delinquency;
+    if (lowerQ.includes('foreclosure') || lowerQ.includes('at-risk')) return responses.foreclosure;
+    if (lowerQ.includes('csat') || lowerQ.includes('satisfaction')) return responses.csat;
+    if (lowerQ.includes('payment') && lowerQ.includes('channel')) return responses.payment;
+    if (lowerQ.includes('escrow') && lowerQ.includes('shortage')) return responses.escrow;
+    if (lowerQ.includes('compliance')) return responses.default;
+    
+    return responses.default;
+  },
+  
+  addUserMessage(message) {
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    // Remove welcome message if present
+    const welcome = messagesDiv.querySelector('.chat-welcome');
+    if (welcome) welcome.remove();
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message user';
+    messageDiv.innerHTML = `
+      <div class="chat-avatar user-avatar">👤</div>
+      <div>
+        <div class="chat-bubble">${this.escapeHtml(message)}</div>
+        <div class="chat-timestamp">${this.getTimestamp()}</div>
+      </div>
+    `;
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  },
+  
+  addAgentMessage(message) {
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message agent';
+    messageDiv.innerHTML = `
+      <div class="chat-avatar agent-avatar">🤖</div>
+      <div>
+        <div class="chat-bubble">${this.formatMessage(message)}</div>
+        <div class="chat-timestamp">${this.getTimestamp()}</div>
+      </div>
+    `;
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  },
+  
+  addSystemMessage(message) {
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    // Remove welcome message if present
+    const welcome = messagesDiv.querySelector('.chat-welcome');
+    if (welcome) welcome.remove();
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message agent';
+    messageDiv.innerHTML = `
+      <div class="chat-avatar agent-avatar">ℹ️</div>
+      <div>
+        <div class="chat-bubble">${this.escapeHtml(message)}</div>
+        <div class="chat-timestamp">${this.getTimestamp()}</div>
+      </div>
+    `;
+    
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  },
+  
+  showTypingIndicator() {
+    const messagesDiv = document.getElementById('chat-messages');
+    
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chat-message agent';
+    typingDiv.id = 'typing-indicator';
+    typingDiv.innerHTML = `
+      <div class="chat-avatar agent-avatar">🤖</div>
+      <div class="chat-bubble loading">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    `;
+    
+    messagesDiv.appendChild(typingDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  },
+  
+  hideTypingIndicator() {
+    const typingDiv = document.getElementById('typing-indicator');
+    if (typingDiv) typingDiv.remove();
+  },
+  
+  formatMessage(message) {
+    // Convert markdown-like formatting
+    return message
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>')
+      .replace(/•/g, '&nbsp;&nbsp;•');
+  },
+  
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+  
+  getTimestamp() {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  },
+  
+  updateStats() {
+    document.getElementById('queries-today').textContent = this.stats.queriesTotal;
+    
+    if (this.stats.responseTimes.length > 0) {
+      const avgTime = this.stats.responseTimes.reduce((a, b) => a + b, 0) / this.stats.responseTimes.length;
+      document.getElementById('avg-response').textContent = (avgTime / 1000).toFixed(1) + 's';
+    }
+    
+    if (this.stats.queriesTotal > 0) {
+      const successRate = (this.stats.successCount / this.stats.queriesTotal * 100).toFixed(1);
+      document.getElementById('success-rate').textContent = successRate + '%';
+    }
+  }
+};
+
+// Initialize Agent when on agent panel
+document.addEventListener('DOMContentLoaded', () => {
+  AgentManager.init();
+});
+</script>
+</body>
+</html>
