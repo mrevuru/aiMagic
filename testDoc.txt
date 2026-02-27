@@ -1,0 +1,342 @@
+Mortg Insights — Project Specification
+1. Overview
+Mortg Insights is a mortgage servicing analytics platform that combines interactive dashboards, a comprehensive loan detail viewer, an AI-powered natural language assistant, and a data dictionary browser. It connects to Snowflake for data access and uses Snowflake Cortex Agent for conversational analytics.
+
+Tech Stack
+Layer	Technology
+Frontend	React 18, TypeScript, Vite, Recharts, react-rnd, xlsx
+Backend	Python 3, Flask 3.1, snowflake-connector-python 3.12
+Database	Snowflake (key-pair auth)
+AI	Snowflake Cortex Agent (SSE streaming)
+Deploy	Docker / Docker Compose
+2. Directory Structure
+MortgInsights/
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx                        # Root router and global state
+│   │   ├── App.css                        # All application styles
+│   │   ├── main.tsx                       # React entry point
+│   │   └── components/
+│   │       ├── SideNav.tsx                # Left navigation sidebar
+│   │       ├── MortgAgent.tsx              # AI chat interface
+│   │       ├── DataDictionary.tsx         # Schema / table browser
+│   │       ├── Loan360.tsx                # Single-loan 360° view
+│   │       ├── ConfigurableDashboard.tsx  # Domain-scoped dashboards
+│   │       ├── ConnectionDialog.tsx       # Settings modal (3 tabs)
+│   │       ├── SavedQueriesPanel.tsx      # Query history & recommendations
+│   │       ├── DraggablePanel.tsx         # Resizable panel wrapper
+│   │       ├── KpiCard.tsx                # Simple KPI display card
+│   │       ├── LoanStatusChart.tsx        # Bar chart (loan statuses)
+│   │       ├── LoanPurposeChart.tsx       # Bar chart (loan purposes)
+│   │       └── PaymentActivityChart.tsx   # Line chart (payments)
+│   ├── public/                            # Static assets (logos, images)
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   └── index.html
+├── backend/
+│   ├── server.py                          # Flask API (all endpoints)
+│   ├── requirements.txt
+│   ├── connection_config.json             # Persisted Snowflake credentials
+│   ├── domain_mappings.json               # Table-to-domain mapping
+│   ├── dashboard_panels.json              # Portfolio dashboard panels
+│   ├── dashboard_panels_*.json            # Per-domain panel configs
+│   ├── data_dictionary_cache.json         # Cached INFORMATION_SCHEMA
+│   └── loan360_panels.json               # Loan 360 panel configs
+├── package.json                           # Root: concurrently dev script
+├── Dockerfile
+├── docker-compose.yml
+└── .env                                   # Environment secrets
+3. Views & Routing
+The app is a single-page application. App.tsx manages the current view via a View state:
+
+View Key	Label	Component	Description
+home	Portfolio	ConfigurableDashboard	Executive portfolio dashboard
+loan360	Loan 360	Loan360	Single-loan deep dive
+agent	Ask Mortg	MortgAgent + SavedQueriesPanel	AI chat with history sidebar
+dictionary	Dictionary	DataDictionary	Schema & column browser
+collections	Collections	ConfigurableDashboard	Domain dashboard
+loss_mitigation	Loss Mitigation	ConfigurableDashboard	Domain dashboard
+foreclosure	Foreclosure	ConfigurableDashboard	Domain dashboard
+bankruptcy	Bankruptcy	ConfigurableDashboard	Domain dashboard
+claims	Claims	ConfigurableDashboard	Domain dashboard
+reo_pres	REO & Pres	ConfigurableDashboard	Domain dashboard
+escrow	Escrow	ConfigurableDashboard	Domain dashboard
+cash	Cash	ConfigurableDashboard	Domain dashboard
+investor	Investor	ConfigurableDashboard	Domain dashboard
+custom_*	(user-defined)	ConfigurableDashboard	Custom domain dashboards
+Domain views are toggled on/off via the Settings dialog. Custom domains can be created by the user.
+
+4. Frontend Components
+4.1 SideNav
+Left sidebar navigation with two sections:
+
+Main: Portfolio, Loan 360, Ask Mortg, Dictionary
+Domains: Dynamically rendered based on enabledDomains (Set) and customDomains (DomainDef[])
+Each item has a custom SVG icon. Custom domains use a generic 4-square grid icon. A "Domains" section header appears when at least one domain is visible. The footer contains a Settings button.
+
+4.2 ConfigurableDashboard
+Reusable dashboard component parameterized by a domain prop. Each domain gets independent panel storage and caching.
+
+Panel management:
+
+Add, edit, delete panels via a modal editor
+Each panel has: id, label, SQL query, display type
+Panels are saved to the backend per domain
+Display type auto-detection:
+
+Condition	Display
+Single row	KPI cards
+Date column + numeric columns	Line chart
+Category + numeric, ≤ 8 rows	Pie chart
+Category + numeric, ≤ 30 rows	Bar chart
+Everything else	Table
+Users can override auto-detection with: kpi, bar, line, pie, table.
+
+Caching: Server-side 15-minute TTL per domain. Cache metadata (age, TTL) is returned with responses.
+
+Export: Individual panel or all panels to Excel (.xlsx).
+
+4.3 Loan360
+Comprehensive single-loan viewer. Searches by loan number and displays data across 13+ configurable panels.
+
+Default panels: Loan Core, Balances, Terms, Borrower, Property, Investor, Delinquency, Loss Mitigation, Transactions (last 30), Escrow Lines, Bankruptcy, Payment History (last 12 months), Comments, Full 360 Summary.
+
+Features:
+
+Summary cards extracted from Loan Core data (Status, Type, Purpose, Rate, LTV, etc.)
+Editable SQL per panel (uses <LOAN_NUMBER> placeholder)
+Per-panel refresh and Excel export
+Add/edit/delete panels
+Collapsible sections
+4.4 MortgAgent
+AI chat interface that streams responses from the Snowflake Cortex Agent via SSE.
+
+Features:
+
+Full conversation history sent with each request for context
+Markdown rendering: code blocks, tables, bold, italic, headers, lists
+Split view: narrative response + synthesized data/tables
+Result tables with pagination (25 rows/page) and Excel export
+"Thinking" collapsible section for agent reasoning
+Stop button to abort streaming
+Queued question support (click a history item to auto-run)
+4.5 DataDictionary
+Interactive INFORMATION_SCHEMA browser.
+
+Features:
+
+Table list with domain filtering sidebar (table counts per domain)
+Full-text search across table names, comments, and column names
+Table detail panel: columns with types, nullability, comments
+Data types colored by category (string, numeric, date, boolean)
+Table metadata: row count, size, type (TABLE/VIEW)
+Refresh button to re-fetch from Snowflake
+4.6 SavedQueriesPanel
+Right sidebar alongside the Mortg Agent chat.
+
+Tabs:
+
+Recommended & Saved
+
+3 hardcoded recommended queries
+User-saved queries (starred from history)
+"Ask Mortg About" section: expandable table reference (BORROWER, LOAN, LOAN_BALANCE, LOAN_TRANSACTION, PROPERTY)
+History
+
+Deduplicated: repeated queries collapsed into one entry with a ×N badge
+Sorted newest-first
+Star button to save/unsave
+Click to re-run query
+4.7 ConnectionDialog
+Settings modal with three tabs:
+
+Snowflake: Account, Warehouse, Database, Schema, Role, User, Key Passphrase
+Mortg Agent: Host, Agent Name, Bearer Token, Warehouse
+Domains: Toggle predefined domains on/off, add/remove custom domains
+Features: test connection, save config, enable/disable all domains, sensitive field masking.
+
+4.8 DraggablePanel
+Wrapper using react-rnd for drag-and-resize. Position and size persist in localStorage by panel id.
+
+4.9 Chart Components
+Small, focused components using Recharts:
+
+KpiCard: Label + value card
+LoanStatusChart: Horizontal bar chart of loan statuses with UPB
+LoanPurposeChart: Bar chart of loan purposes with total original amount
+PaymentActivityChart: Dual-axis line chart (amount + transaction count)
+5. Backend API
+5.1 Connection & Health
+Method	Endpoint	Description
+GET	/api/health	{ status, connected }
+GET	/api/connection	Return config (sensitive fields masked)
+POST	/api/connection	Update config, reconnect, persist to JSON
+POST	/api/connection/test	Test Snowflake connectivity
+5.2 Portfolio Summary (Legacy Endpoints)
+Method	Endpoint	Description
+GET	/api/portfolio-summary	Total loans, UPB, avg rate, avg LTV
+GET	/api/loss-mitigation	Active cases, total UPB
+GET	/api/loan-status	Breakdown by status
+GET	/api/payment-activity	7-day payment transaction summary
+GET	/api/escrow-summary	Escrow totals
+GET	/api/loan-purpose	Loans by purpose
+5.3 Configurable Dashboard
+Method	Endpoint	Query Params	Description
+GET	/api/dashboard/panels	domain	Get panel configs for domain
+POST	/api/dashboard/panels	domain	Save panel configs for domain
+GET	/api/dashboard/data	domain, refresh	Execute panels, return cached data
+Domain validation: Built-in domains + any key starting with custom_. Defaults to portfolio.
+
+Cache behavior:
+
+15-minute TTL (configurable via DASHBOARD_CACHE_TTL env var)
+refresh=true bypasses cache
+Cache invalidated on panel save
+Response includes _meta: { cached, age_seconds, ttl_seconds }
+Storage: dashboard_panels_{domain}.json per domain.
+
+5.4 Loan 360
+Method	Endpoint	Query Params	Description
+GET	/api/loan360/panels	—	Get panel config list
+POST	/api/loan360/panels	—	Save panel config list
+GET	/api/loan360	loan_number	Execute all panels for loan
+GET	/api/loan360/panel	loan_number, panel_id	Refresh single panel
+SQL queries use <LOAN_NUMBER> placeholder, replaced server-side with parameterized binding.
+
+5.5 Data Dictionary
+Method	Endpoint	Description
+GET	/api/data-dictionary	Return cached schema (tables + columns)
+GET	/api/data-dictionary/domains	Return domain-to-table mappings
+POST	/api/data-dictionary/refresh	Re-fetch from INFORMATION_SCHEMA
+Data is cached in data_dictionary_cache.json. Domain mappings are editable in domain_mappings.json and auto-generated on first refresh from table name prefixes.
+
+5.6 Mortg Agent
+Method	Endpoint	Body	Response
+POST	/api/agent	{ messages: [{role, content}] }	SSE event stream
+Proxies to Snowflake Cortex Agent API. Streams SSE events in real time. Sends Bearer token in Authorization header.
+
+5.7 Frontend Serving (Production)
+GET / and catch-all routes serve the built SPA from ../frontend/dist/
+Non-existent paths return index.html for client-side routing
+6. Data Model
+6.1 Snowflake Tables (Key Tables)
+Table	Description
+BORROWER	Demographics, contact, HMDA data, preferences
+LOAN	Characteristics, terms, rates, LTV, status flags
+LOAN_BALANCE	Principal, escrow, advances, suspense balances
+LOAN_TRANSACTION	Payment history, disbursements, fees, dates
+PROPERTY	Addresses, type, occupancy, flood zone, HOA
+Additional tables span 15+ domains: collections, loss mitigation, foreclosure, bankruptcy, claims, REO, escrow, cash, investor, and more.
+
+6.2 Frontend Data Structures
+// History (localStorage: Mortg_history_v1)
+interface HistoryItem {
+  id: string;        // Date.now().toString(36)
+  text: string;      // The question text
+  askedAt: number;   // Unix timestamp
+}
+
+// Saved queries (localStorage: Mortg_saved_queries_v1)
+interface SavedQuery {
+  id: string;
+  text: string;
+  savedAt: number;
+}
+
+// Domain definitions
+interface DomainDef {
+  key: string;       // e.g. "collections" or "custom_my_panel"
+  label: string;     // Display name
+}
+
+// Dashboard panel config
+interface PanelConfig {
+  id: string;
+  label: string;
+  query: string;
+  display: "auto" | "kpi" | "bar" | "line" | "pie" | "table";
+}
+
+// Loan 360 panel config
+interface PanelConfig {
+  id: string;
+  label: string;
+  query: string;     // Contains <LOAN_NUMBER> placeholder
+}
+
+// Connection config
+interface ConnectionConfig {
+  account: string;
+  host: string;
+  warehouse: string;
+  database: string;
+  schema: string;
+  role: string;
+  user: string;
+  private_key_passphrase: string;
+  bearer_token: string;
+  agent_name: string;
+}
+6.3 Backend Storage Files
+File	Purpose
+connection_config.json	Snowflake credentials
+domain_mappings.json	Table → domain mapping
+data_dictionary_cache.json	Cached INFORMATION_SCHEMA
+dashboard_panels.json	Portfolio dashboard panel configs
+dashboard_panels_{domain}.json	Per-domain dashboard panel configs
+loan360_panels.json	Loan 360 panel configs
+7. localStorage Keys
+Key	Component	Data
+Mortg_history_v1	App.tsx	HistoryItem[] (max 100)
+Mortg_saved_queries_v1	SavedQueriesPanel	SavedQuery[]
+Mortg_enabled_domains_v1	ConnectionDialog	string[] (enabled domain keys)
+Mortg_custom_domains_v1	ConnectionDialog	DomainDef[] (custom panels)
+drag_pos_{panelId}	DraggablePanel	{ x, y, width, height }
+8. Authentication & Security
+Snowflake: Key-pair authentication using PEM private key with passphrase
+Private key path: ~/.ssh/SVC_SNOWFLAKE_AI_MCP.p8 (configurable via SNOWFLAKE_PRIVATE_KEY_PATH env var)
+Cortex Agent: Bearer token in Authorization header
+Sensitive fields: Masked in GET /api/connection response
+SQL injection prevention: Parameterized queries for user-supplied loan numbers
+CORS: Enabled via flask-cors
+9. Caching Strategy
+Layer	Scope	TTL	Invalidation
+Backend	Dashboard data per domain	15 min	Panel save or refresh=true
+Backend	Data dictionary	Permanent	Manual refresh button
+Frontend	Panel positions	Permanent	Manual
+Frontend	Domain toggles	Permanent	Settings dialog
+Frontend	Query history	Permanent	Max 100 items (FIFO)
+10. Development
+Running Locally
+# From project root — starts both frontend and backend
+npm run dev
+
+# Or separately:
+cd backend && ./venv/bin/python server.py    # Port 3001
+cd frontend && npm run dev                    # Port 5173 (proxies /api → 3001)
+Environment Variables
+Variable	Default	Description
+SNOWFLAKE_PRIVATE_KEY_PASSPHRASE	—	PEM key passphrase
+SNOWFLAKE_BEARER_TOKEN	—	Cortex Agent bearer token
+SNOWFLAKE_PRIVATE_KEY_PATH	~/.ssh/SVC_SNOWFLAKE_AI_MCP.p8	Path to private key file
+DASHBOARD_CACHE_TTL	900	Cache TTL in seconds
+Building for Production
+cd frontend && npm run build    # Outputs to frontend/dist/
+# Backend serves the built SPA from ../frontend/dist/
+Docker
+docker compose up --build       # Builds and starts the full stack
+11. Key Design Decisions
+Single ConfigurableDashboard for all domains — Rather than creating separate components for each domain, a single component is reused with a domain prop. Panel configs and cached data are scoped by domain.
+
+Auto-detect display type — Dashboards infer the best visualization (KPI, chart, table) from query result shape, reducing configuration burden. Users can override when needed.
+
+SSE streaming for AI chat — The Mortg Agent uses Server-Sent Events for real-time response streaming, providing a responsive chat experience with stop/cancel capability.
+
+localStorage for UI state — Domain toggles, custom domains, query history, saved queries, and panel positions all persist client-side. This keeps the backend stateless for UI preferences.
+
+Backend file-based storage — Panel configs and cache are stored as JSON files rather than a database. Simple, portable, and sufficient for single-instance deployment.
+
+Custom domain support — Users can create arbitrary domain dashboards via Settings. Custom domain keys are prefixed with custom_ for clean separation from built-in domains.
+
+History deduplication — Repeated queries in the History tab are collapsed into a single entry with a ×N count badge, keeping the list concise.
